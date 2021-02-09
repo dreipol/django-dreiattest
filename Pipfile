@@ -8,6 +8,7 @@ pytest-cov = "*"
 pytest = "*"
 
 [packages]
+django = "2.*"
 
 [scripts]
 tests = "pytest"
