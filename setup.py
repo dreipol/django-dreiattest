@@ -12,9 +12,9 @@ from shutil import rmtree
 from setuptools import find_packages, setup, Command
 
 # Package meta-data.
-NAME = 'dreiattest'
+NAME = 'dreiattest-django'
 DESCRIPTION = ''
-URL = 'https://github.com/dreipol/dreiattest'
+URL = 'https://github.com/dreipol/dreiattest-django'
 EMAIL = 'dev@dreipol.ch'
 AUTHOR = 'dreipol'
 REQUIRES_PYTHON = '>=3.6.0'
