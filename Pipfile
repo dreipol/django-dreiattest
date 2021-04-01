@@ -6,13 +6,16 @@ verify_ssl = true
 [dev-packages]
 pytest-cov = "*"
 pytest = "*"
+twine = "*"
 
 [packages]
-django = "2.*"
+django = "==2.*"
+pyattest = "==0.0.*"
 
 [scripts]
 tests = "pytest"
 coverage = "pytest --cov=pyattest tests/"
+upload = "python setup.py upload"
 
 [requires]
 python_version = "3.8.0"

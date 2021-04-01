@@ -13,13 +13,16 @@ with `python manage.py migrate dreiattest`
 ## Usage
 
 In your settings.py, make sure to set the correct Apple AppId as well as the environment you want to test in.
+
 ```
 DREIATTEST_APPLE_APPID = '5LVDC4HW22.ch.dreipol.dreiattestTestHost'
 DREIATTEST_PRODUCTION = False
 ```
+
 There are more advanced settings you can find in dreiattest/settings.py
 
 All that's left is to add the `signature_required` view decorator
+
 ```python
 from dreiattest.decorators import signature_required
 
@@ -29,5 +32,3 @@ def demo(request: WSGIRequest):
     return JsonResponse({'foo': 'bar'})
 
 ```
-
-
