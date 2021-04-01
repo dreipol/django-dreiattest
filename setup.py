@@ -8,6 +8,7 @@ import io
 import os
 import sys
 from shutil import rmtree
+from dreiattest import __version__
 
 from setuptools import find_packages, setup, Command
 
@@ -18,7 +19,7 @@ URL = 'https://github.com/dreipol/django-dreiattest'
 EMAIL = 'dev@dreipol.ch'
 AUTHOR = 'dreipol'
 REQUIRES_PYTHON = '>=3.6.0'
-VERSION = None
+VERSION = __version__
 
 REQUIRED = []
 
@@ -31,11 +32,7 @@ with io.open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 # Load the package's __version__.py module as a dictionary.
 about = {}
-if not VERSION:
-    with open(os.path.join(here, NAME, '__version__.py')) as f:
-        exec(f.read(), about)
-else:
-    about['__version__'] = VERSION
+about['__version__'] = VERSION
 
 
 class UploadCommand(Command):
