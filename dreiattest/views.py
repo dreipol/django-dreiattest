@@ -14,14 +14,14 @@ from dreiattest.device_session import device_session_from_request
 def nonce(request: WSGIRequest):
     """
     Request a nonce to create the attestation on the device. The Dreiattest-Uid header needs to be set
-    with a valid  user id. The server will persist the nonce and persist it with the given uid.
+    with a valid device session id. The server will persist the nonce and persist it with the given uid.
     """
     try:
-        user = device_session_from_request(request)
+        device_session = device_session_from_request(request)
     except InvalidHeaderException:
         return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid header.'})
 
-    nonce = create_nonce(user)
+    nonce = create_nonce(device_session)
 
     return JsonResponse({'nonce': nonce.value})
 
@@ -31,9 +31,9 @@ def nonce(request: WSGIRequest):
 def key(request: WSGIRequest):
     """ Store a public key belonging to a user in the database. Upcoming requests can be signed with said key. """
     try:
-        user = device_session_from_request(request, create=False)
-        nonce = nonce_from_request(request, user)
-        public_key = key_from_request(request, nonce, user)
+        device_session = device_session_from_request(request, create=False)
+        nonce = nonce_from_request(request, device_session)
+        public_key = key_from_request(request, nonce, device_session)
     except InvalidHeaderException as exception:
         return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid or Dreiattest-Nonce header.'}, status=400)
     except InvalidPayloadException as exception:
