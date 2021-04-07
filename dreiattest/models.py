@@ -13,7 +13,8 @@ class DeviceSession(Model):
         index_together = ['user_id', 'session_id']
 
     def __str__(self):
-        return f'{self.user_id};{self.session_id}'
+        session_id = str(self.session_id).upper()
+        return f'{self.user_id};{session_id}'
 
 
 class Nonce(Model):

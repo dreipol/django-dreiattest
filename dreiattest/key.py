@@ -30,7 +30,7 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
 
     public_key_id, public_key = driver(data, nonce, device_session)
     key, _ = Key.objects.update_or_create(
-        user=device_session,
+        device_session=device_session,
         defaults={'public_key': public_key, 'public_key_id': public_key_id}
     )
     nonce.mark_used()

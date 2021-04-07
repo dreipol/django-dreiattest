@@ -1,4 +1,5 @@
 from typing import Optional, Tuple
+from uuid import UUID
 
 from . import settings as dreiattest_settings
 
@@ -9,7 +10,7 @@ from .helpers import is_valid_uuid
 from .models import DeviceSession
 
 
-def get_or_create_device_session(user_id: str, session_id: str, create: bool = True) -> DeviceSession:
+def get_or_create_device_session(user_id: str, session_id: UUID, create: bool = True) -> DeviceSession:
     """ Return matching DeviceSession model from the db, user_id and session_id need to be validated."""
     if create:
         session, _ = DeviceSession.objects.get_or_create(session_id=session_id, user_id=user_id)
@@ -33,7 +34,7 @@ def device_session_from_request(request: WSGIRequest, create: bool = True) -> De
     return get_or_create_device_session(user_id, session_id, create)
 
 
-def parse_header(header: str) -> Optional[Tuple[str, str]]:
+def parse_header(header: str) -> Optional[Tuple[str, UUID]]:
     """
     The format is user_id;session_id where the identifier has to be a string with maxlength 128 and the
     session_id has to be a valid v4 uuid.
@@ -49,7 +50,7 @@ def parse_header(header: str) -> Optional[Tuple[str, str]]:
     if not is_valid_user_id(user_id):
         raise InvalidHeaderException
 
-    return user_id, session_id
+    return user_id, UUID(session_id)
 
 
 def is_valid_user_id(user_id: str) -> bool:
