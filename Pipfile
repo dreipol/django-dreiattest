@@ -18,4 +18,4 @@ coverage = "pytest --cov=pyattest tests/"
 upload = "python setup.py upload"
 
 [requires]
-python_version = "3.8.0"
+python_version = "3.8"
