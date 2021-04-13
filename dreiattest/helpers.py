@@ -21,4 +21,4 @@ def is_valid_uuid(uuid: Optional[str] = None, version=4) -> bool:
     except ValueError:
         return False
 
-    return str(uuid_obj) == uuid.lower()
+    return str(uuid_obj).lower() == uuid.lower()
