@@ -30,8 +30,10 @@ def signature_required():
                 if not public_key:
                     raise InvalidHeaderException
 
+                # TODO: Use whole URL
                 request_dict = request_as_dict(request)
                 public_key = load_pem_public_key(public_key.public_key.encode())
+                # TODO: Not all public keys take 4 arguments for verifying
                 public_key.verify(
                     base64.b64decode(request.META.get(dreiattest_settings.DREIATTEST_SIGNATURE_HEADER, '')),
                     json.dumps(request_dict).encode(),
