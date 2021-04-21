@@ -13,6 +13,8 @@ from cryptography.hazmat.primitives.asymmetric import (
     ed448,
     rsa,
 )
+from pyattest.verifiers.apple import AppleVerifier
+
 
 class DeviceSession(Model):
     user_id = CharField(max_length=255, null=True)
@@ -50,8 +52,8 @@ class Key(Model):
     def load_pem(self) -> _PUBLIC_KEY_TYPES:
         return load_pem_public_key(self.public_key.encode())
 
-    def verify(self, header_signature: bytes, nonce: bytes) -> None:
+    def verify(self, signature_header: bytes, nonce: bytes) -> None:
         pem_key = self.load_pem()
 
         if isinstance(pem_key, ec.EllipticCurvePublicKey):
-            pem_key.verify(header_signature, nonce, ECDSA(hashes.SHA256()))
+            AppleVerifier.verify_assertion(signature_header, nonce, pem_key)

@@ -13,14 +13,15 @@ def request_as_dict(request: WSGIRequest) -> dict:
     }
 
 
-def request_hash(request: WSGIRequest) -> bytes:
+def request_hash(request: WSGIRequest) -> sha256:
     """ Convert given request to a hash so we can check if the signature matches. """
     uri = request.build_absolute_uri().encode("utf-8")
     method = request.method.encode("utf-8")
+    # TODO: Define headers
     headers = request.headers
     body = request.body
     data = uri + method + body
-    return data
+    return sha256(data)
 
 
 
