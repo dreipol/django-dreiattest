@@ -1,4 +1,4 @@
-import base64
+from base64 import b64decode
 from functools import wraps
 from hashlib import sha256
 
@@ -24,9 +24,10 @@ def signature_required():
                 public_key = Key.objects.filter(device_session=session).order_by('-id').first()
                 if not public_key:
                     raise InvalidHeaderException
+
                 nonce_header = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode("utf-8")
-                signature_header = base64.b64decode(
-                    request.META.get(dreiattest_settings.DREIATTEST_SIGNATURE_HEADER, ''))
+                signature_header = b64decode(request.META.get(dreiattest_settings.DREIATTEST_SIGNATURE_HEADER, ''))
+
                 expected_client_data_hash = request_hash(request).digest()
                 client_data_with_nonce = sha256(expected_client_data_hash + nonce_header).digest()
 
