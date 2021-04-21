@@ -17,9 +17,15 @@ def request_as_dict(request: WSGIRequest) -> dict:
     }
 
 
+def remove_scheme(uri: str, scheme: str) -> str:
+    if uri.startswith(scheme):
+        return uri[len(scheme + "://"):]
+    return uri
+
+
 def request_hash(request: WSGIRequest) -> sha256:
     """ Convert given request to a hash so we can check if the signature matches. """
-    uri = request.build_absolute_uri().encode('utf-8')
+    uri = remove_scheme(request.build_absolute_uri(), request.scheme).encode('utf-8')
     method = request.method.encode('utf-8')
     body = request.body
 
