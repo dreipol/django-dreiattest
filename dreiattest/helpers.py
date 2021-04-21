@@ -1,4 +1,3 @@
-import io
 import json
 from hashlib import sha256
 from typing import Optional
@@ -19,15 +18,16 @@ def request_as_dict(request: WSGIRequest) -> dict:
 
 def request_hash(request: WSGIRequest) -> sha256:
     """ Convert given request to a hash so we can check if the signature matches. """
-    uri = request.build_absolute_uri().encode("utf-8")
-    method = request.method.encode("utf-8")
+    uri = request.build_absolute_uri().encode('utf-8')
+    method = request.method.encode('utf-8')
     body = request.body
 
-    header_keys = request.META.get(dreiattest_settings.DREIATTEST_USER_HEADERS, '').split(",")
-    headers = {k: request.headers.get(k) for k in header_keys }
+    header_keys = request.META.get(dreiattest_settings.DREIATTEST_USER_HEADERS, '').split(',')
+    headers = {k: request.headers.get(k) for k in header_keys}
     headers_json = json.dumps(headers, sort_keys=True, indent=None, separators=(',', ':'))
 
-    data = uri + method + headers_json.encode("utf-8") + body
+    data = uri + method + headers_json.encode('utf-8') + body
+
     return sha256(data)
 
 
