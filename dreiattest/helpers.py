@@ -6,6 +6,7 @@ from uuid import UUID
 from django.core.handlers.wsgi import WSGIRequest
 
 from . import settings as dreiattest_settings
+from .logging import logger
 
 
 def request_as_dict(request: WSGIRequest) -> dict:
@@ -28,6 +29,7 @@ def request_hash(request: WSGIRequest) -> sha256:
 
     data = uri + method + headers_json.encode('utf-8') + body
 
+    logger.debug(f'Client data: {data}')
     return sha256(data)
 
 
