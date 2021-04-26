@@ -4,10 +4,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pyattest.exceptions import PyAttestException
 
+from dreiattest.device_session import device_session_from_request
 from dreiattest.exceptions import InvalidHeaderException, InvalidPayloadException
 from dreiattest.key import key_from_request
 from dreiattest.nonce import create_nonce, nonce_from_request
-from dreiattest.device_session import device_session_from_request
 
 
 @require_http_methods(['GET'])
@@ -23,7 +23,7 @@ def nonce(request: WSGIRequest):
 
     nonce = create_nonce(device_session)
 
-    return JsonResponse({'nonce': nonce.value})
+    return JsonResponse(nonce.value, safe=False)
 
 
 @require_http_methods(['POST'])
