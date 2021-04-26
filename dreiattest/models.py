@@ -58,7 +58,8 @@ class Key(Model):
         pem_key = self.load_pem()
 
         if isinstance(pem_key, ec.EllipticCurvePublicKey):
-            config = AppleConfig(key_id=base64.b64decode(self.public_key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
+            config = AppleConfig(key_id=base64.b64decode(self.public_key_id),
+                                 app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
                                  production=dreiattest_settings.DREIATTEST_PRODUCTION)
 
             AppleVerifier.verify_assertion(signature_header, nonce, pem_key, config)
