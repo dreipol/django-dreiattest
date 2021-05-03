@@ -23,6 +23,7 @@ def signature_required():
                 session = device_session_from_request(request, create=False)
                 public_key = Key.objects.filter(device_session=session).order_by('-id').first()
                 if not public_key:
+                    # TODO: set invalid_key in Dreiattest_Error header
                     raise InvalidHeaderException
 
                 nonce_header = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode("utf-8")
@@ -33,8 +34,9 @@ def signature_required():
 
                 public_key.verify(signature_header, client_data_with_nonce)
             except InvalidHeaderException as exception:
-                return JsonResponse({'error': 'Invalid or missing json payload.'}, status=400)
+                return JsonResponse({'error': 'Invalid or missing json payload.'}, status=403)
             except InvalidSignature as exception:
+                # TODO: set invalid_signature in Dreiattest_Error header
                 return JsonResponse({'error': 'Invalid signature.'}, status=403)
             return func(request, *args, **kwargs)
 
