@@ -19,7 +19,6 @@ def nonce(request: WSGIRequest):
     try:
         device_session = device_session_from_request(request)
     except InvalidHeaderException:
-        # TODO: review status codes
         return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid header.'}, status=403)
 
     nonce = create_nonce(device_session)
@@ -36,8 +35,6 @@ def key(request: WSGIRequest):
         nonce = nonce_from_request(request, device_session)
         public_key = key_from_request(request, nonce, device_session)
     except InvalidNonceException as exception:
-        # TODO: set invalid_nonce in Dreiattest_Error header
-        # TODO: review status codes
         return JsonResponse({'error': 'Invalid Dreiattest-Nonce header.'}, status=400)
     except InvalidHeaderException as exception:
         return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid or Dreiattest-Nonce header.'}, status=400)
