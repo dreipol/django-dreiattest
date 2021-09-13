@@ -2,12 +2,12 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-from pyattest.exceptions import PyAttestException
+from pyattest.exceptions import PyAttestException, InvalidNonceException
 
+from dreiattest.device_session import device_session_from_request
 from dreiattest.exceptions import InvalidHeaderException, InvalidPayloadException
 from dreiattest.key import key_from_request
 from dreiattest.nonce import create_nonce, nonce_from_request
-from dreiattest.device_session import device_session_from_request
 
 
 @require_http_methods(['GET'])
@@ -19,11 +19,11 @@ def nonce(request: WSGIRequest):
     try:
         device_session = device_session_from_request(request)
     except InvalidHeaderException:
-        return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid header.'})
+        return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid header.'}, status=403)
 
     nonce = create_nonce(device_session)
 
-    return JsonResponse({'nonce': nonce.value})
+    return JsonResponse(nonce.value, safe=False)
 
 
 @require_http_methods(['POST'])
@@ -34,6 +34,8 @@ def key(request: WSGIRequest):
         device_session = device_session_from_request(request, create=False)
         nonce = nonce_from_request(request, device_session)
         public_key = key_from_request(request, nonce, device_session)
+    except InvalidNonceException as exception:
+        return JsonResponse({'error': 'Invalid Dreiattest-Nonce header.'}, status=400)
     except InvalidHeaderException as exception:
         return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid or Dreiattest-Nonce header.'}, status=400)
     except InvalidPayloadException as exception:
