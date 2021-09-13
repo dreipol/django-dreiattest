@@ -20,7 +20,9 @@ AUTHOR = 'dreipol'
 REQUIRES_PYTHON = '>=3.6.0'
 VERSION = None
 
-REQUIRED = []
+REQUIRED = [
+    'pyattest',
+]
 
 here = os.path.abspath(os.path.dirname(__file__))
 
