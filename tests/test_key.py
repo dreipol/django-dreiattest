@@ -62,7 +62,7 @@ class PublicKey(TestCase):
         data = {
             'driver': 'google',
             'key_id': base64.b64encode(key_id).decode('utf-8'),
-            'attestation': base64.b64encode(attest.encode()).decode('utf-8'),
+            'attestation': attest,
         }
         request = self.rf.post('/foo', data, content_type='application/json')
 

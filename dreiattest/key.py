@@ -29,7 +29,7 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
         raise InvalidDriverException
 
     public_key_id = data.get('key_id', None)  # base64 encoded
-    raw_attestation = data.get('attestation', None)  # base64 encoded
+    raw_attestation = data.get('attestation', None)  # base64 encoded for apple, jwt token for google
 
     attestation = create_and_verify_attestation(driver, raw_attestation, public_key_id, nonce, device_session)
     public_key = public_key_from_attestation(attestation)
@@ -55,16 +55,18 @@ def create_and_verify_attestation(driver: str, raw_attestation: str, public_key_
     if driver == 'apple':
         config = AppleConfig(key_id=base64.b64decode(public_key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
                              production=dreiattest_settings.DREIATTEST_PRODUCTION)
+        attestation = base64.b64decode(raw_attestation)
     elif driver == 'google':
         config = GoogleConfig(key_ids=[base64.b64decode(public_key_id)],
                               apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
                               production=dreiattest_settings.DREIATTEST_PRODUCTION)
+        attestation = raw_attestation
     else:
         raise InvalidDriverException
 
     nonce = (str(device_session) + public_key_id + nonce.value).encode()
 
-    attestation = Attestation(base64.b64decode(raw_attestation), nonce, config)
+    attestation = Attestation(attestation, nonce, config)
     attestation.verify()
 
     return attestation
