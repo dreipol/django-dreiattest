@@ -4,7 +4,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from dreiattest.device_session import device_session_from_request
-from dreiattest.exceptions import InvalidHeaderException
 from dreiattest.key import key_from_request
 from dreiattest.nonce import create_nonce, nonce_from_request
 
@@ -15,11 +14,7 @@ def nonce(request: WSGIRequest):
     Request a nonce to create the attestation on the device. The Dreiattest-Uid header needs to be set
     with a valid device session id. The server will persist the nonce and persist it with the given uid.
     """
-    try:
-        device_session = device_session_from_request(request)
-    except InvalidHeaderException:
-        return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid header.'}, status=403)
-
+    device_session = device_session_from_request(request)
     nonce = create_nonce(device_session)
 
     return JsonResponse(nonce.value, safe=False)
@@ -32,15 +27,5 @@ def key(request: WSGIRequest):
     device_session = device_session_from_request(request, create=False)
     nonce = nonce_from_request(request, device_session)
     public_key = key_from_request(request, nonce, device_session)
-
-    # Move to custom error handler
-    # except InvalidNonceException as exception:
-    #     return JsonResponse({'error': 'Invalid Dreiattest-Nonce header.'}, status=400)
-    # except InvalidHeaderException as exception:
-    #     return JsonResponse({'error': 'Invalid or missing Dreiattest-Uid or Dreiattest-Nonce header.'}, status=400)
-    # except InvalidPayloadException as exception:
-    #     return JsonResponse({'error': 'Invalid or missing json payload.'}, status=400)
-    # except (TypeError, PyAttestException) as exception:
-    #     return JsonResponse({'error': 'Could not verify given attestation.'}, status=422)
 
     return JsonResponse({'success': True, 'key_id': public_key.public_key_id})

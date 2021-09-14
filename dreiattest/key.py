@@ -1,10 +1,11 @@
 import base64
 import json
-from hashlib import sha256
 from json import JSONDecodeError
+from typing import Tuple
 
 from asn1crypto import pem
 from django.core.handlers.wsgi import WSGIRequest
+from pyattest.configs.config import Config
 from pyattest.configs.google import GoogleConfig
 
 from dreiattest.models import Nonce, Key, DeviceSession
@@ -25,13 +26,10 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
         raise InvalidPayloadException
 
     driver = data.get('driver', None)
-    if not driver or driver not in ['apple', 'google']:
+    if not driver or driver not in drivers.keys():
         raise InvalidDriverException
 
-    public_key_id = data.get('key_id', None)  # base64 encoded
-    raw_attestation = data.get('attestation', None)  # base64 encoded for apple, jwt token for google
-
-    attestation = create_and_verify_attestation(driver, raw_attestation, public_key_id, nonce, device_session)
+    attestation, public_key_id = create_and_verify_attestation(driver, data, nonce, device_session)
     public_key = public_key_from_attestation(attestation)
 
     key, _ = Key.objects.update_or_create(
@@ -50,28 +48,45 @@ def public_key_from_attestation(attestation: Attestation) -> str:
     return public_key
 
 
-def create_and_verify_attestation(driver: str, raw_attestation: str, public_key_id: str, nonce: Nonce,
-                                  device_session: DeviceSession) -> Attestation:
-    if driver == 'apple':
-        config = AppleConfig(key_id=base64.b64decode(public_key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
-                             production=dreiattest_settings.DREIATTEST_PRODUCTION)
-        attestation = base64.b64decode(raw_attestation)
-    elif driver == 'google':
-        config = GoogleConfig(key_ids=[base64.b64decode(public_key_id)],
-                              apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
-                              production=dreiattest_settings.DREIATTEST_PRODUCTION)
-        attestation = raw_attestation
-    else:
-        raise InvalidDriverException
+def create_and_verify_attestation(driver: str, data: dict, nonce: Nonce,
+                                  device_session: DeviceSession) -> Tuple[Attestation, str]:
+    driver = drivers.get(driver)
+    attestation, public_key_id, config = driver(data)
 
     nonce = (str(device_session) + public_key_id + nonce.value).encode()
 
     attestation = Attestation(attestation, nonce, config)
     attestation.verify()
 
-    return attestation
+    return attestation, public_key_id
 
 
-def get_key_id(key: str) -> bytes:
-    """ Get the sha256 fingerprint of the given base64 encoded public key. """
-    return sha256(base64.b64decode(key)).digest()
+def google(data: dict) -> Tuple[str, str, Config]:
+    attestation = data.get('attestation', None)
+    public_key_id = data.get('public_key', None)  # base64 encoded
+    if not attestation or not public_key_id:
+        raise InvalidPayloadException
+
+    config = GoogleConfig(key_ids=[base64.b64decode(public_key_id)],
+                          apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
+                          production=dreiattest_settings.DREIATTEST_PRODUCTION)
+
+    return attestation, public_key_id, config
+
+
+def apple(data: dict) -> Tuple[bytes, str, Config]:
+    attestation = base64.b64decode(data.get('attestation', None))
+    public_key_id = data.get('key_id', None)  # base64 encoded
+    if not attestation or not public_key_id:
+        raise InvalidPayloadException
+
+    config = AppleConfig(key_id=base64.b64decode(public_key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
+                         production=dreiattest_settings.DREIATTEST_PRODUCTION)
+
+    return attestation, public_key_id, config
+
+
+drivers = {
+    'google': google,
+    'apple': apple,
+}
