@@ -2,10 +2,10 @@ import base64
 import json
 from hashlib import sha256
 from json import JSONDecodeError
-from typing import Tuple
 
 from asn1crypto import pem
 from django.core.handlers.wsgi import WSGIRequest
+from pyattest.configs.google import GoogleConfig
 
 from dreiattest.models import Nonce, Key, DeviceSession
 from .exceptions import InvalidPayloadException, InvalidDriverException
@@ -24,11 +24,16 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
     except JSONDecodeError:
         raise InvalidPayloadException
 
-    driver = drivers.get(data.get('driver', None), None)
-    if not driver:
+    driver = data.get('driver', None)
+    if not driver or driver not in ['apple', 'google']:
         raise InvalidDriverException
 
-    public_key_id, public_key = driver(data, nonce, device_session)
+    public_key_id = data.get('key_id', None)  # base64 encoded
+    raw_attestation = data.get('attestation', None)  # base64 encoded
+
+    attestation = create_and_verify_attestation(driver, raw_attestation, public_key_id, nonce, device_session)
+    public_key = public_key_from_attestation(attestation)
+
     key, _ = Key.objects.update_or_create(
         device_session=device_session,
         defaults={'public_key': public_key, 'public_key_id': public_key_id}
@@ -38,25 +43,28 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
     return key
 
 
-def apple(data: dict, nonce, device_session: DeviceSession) -> Tuple[str, str]:
-    public_key_id = data.get('key_id', None)  # base64 encoded
-    raw_attestation = data.get('attestation', None)  # base64 encoded
-
-    attestation = verify_apple(raw_attestation, public_key_id, nonce, device_session)
-
+def public_key_from_attestation(attestation: Attestation) -> str:
     certificate = attestation.data.get('certs')[-1]
     public_key = pem.armor('PUBLIC KEY', certificate.public_key.dump()).decode()
 
-    return public_key_id, public_key
+    return public_key
 
 
-def verify_apple(attestation, key_id: str, nonce: Nonce, device_session: DeviceSession) -> Attestation:
-    config = AppleConfig(key_id=base64.b64decode(key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
-                         production=dreiattest_settings.DREIATTEST_PRODUCTION)
+def create_and_verify_attestation(driver: str, raw_attestation: str, public_key_id: str, nonce: Nonce,
+                                  device_session: DeviceSession) -> Attestation:
+    if driver == 'apple':
+        config = AppleConfig(key_id=base64.b64decode(public_key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
+                             production=dreiattest_settings.DREIATTEST_PRODUCTION)
+    elif driver == 'google':
+        config = GoogleConfig(key_ids=[base64.b64decode(public_key_id)],
+                              apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
+                              production=dreiattest_settings.DREIATTEST_PRODUCTION)
+    else:
+        raise InvalidDriverException
 
-    nonce = (str(device_session) + key_id + nonce.value).encode()
+    nonce = (str(device_session) + public_key_id + nonce.value).encode()
 
-    attestation = Attestation(base64.b64decode(attestation), nonce, config)
+    attestation = Attestation(base64.b64decode(raw_attestation), nonce, config)
     attestation.verify()
 
     return attestation
@@ -65,8 +73,3 @@ def verify_apple(attestation, key_id: str, nonce: Nonce, device_session: DeviceS
 def get_key_id(key: str) -> bytes:
     """ Get the sha256 fingerprint of the given base64 encoded public key. """
     return sha256(base64.b64decode(key)).digest()
-
-
-drivers = {
-    'apple': apple
-}
