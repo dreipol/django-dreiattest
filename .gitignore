@@ -15,3 +15,4 @@ django_dreiattest.egg-info/
 dist/
 app.py
 app2.py
+dreiattest.sqlite

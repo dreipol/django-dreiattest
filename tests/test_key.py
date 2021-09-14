@@ -1,28 +1,70 @@
-# import os
-# from hashlib import sha256
-# from pathlib import Path
-#
-# from cryptography.hazmat.primitives import serialization
-# from cryptography.x509.base import load_pem_x509_certificate
-# from pytest import raises
-#
-# import tests.factories.attestation.apple
-# from pyattest.attestation import Attestation
-# from pyattest.configs.apple import AppleConfig
-# from pyattest.exceptions import InvalidAaguidException, InvalidNonceException, InvalidKeyIdException, \
-#     InvalidAppIdException, InvalidCounterException, InvalidCredentialIdException
-# from tests.factories import attestation as attest_factory
-#
-# root_ca = load_pem_x509_certificate(Path('tests/fixtures/root_cert.pem').read_bytes())
-# root_ca_pem = root_ca.public_bytes(serialization.Encoding.PEM)
-# nonce = os.urandom(32)
-#
-#
-# def test_happy_path():
-#     """ Test the basic attest verification where everything works like it should :) """
-#     attest, public_key = tests.factories.attestation.apple.get(app_id='foo', nonce=nonce)
-#     key_id = sha256(public_key).digest()
-#     config = AppleConfig(key_id=key_id, app_id='foo', root_ca=root_ca_pem)
-#
-#     attestation = Attestation(attest, nonce, config)
-#     attestation.verify()
+import base64
+import uuid
+from hashlib import sha256
+from unittest.mock import patch
+import pkgutil
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.x509.base import load_pem_x509_certificate
+from pyattest.configs.apple import AppleConfig
+from pyattest.configs.google import GoogleConfig
+
+from dreiattest.key import key_from_request
+from dreiattest.models import DeviceSession
+from django.test import RequestFactory
+from django.test import TestCase
+
+from dreiattest.nonce import create_nonce
+from tests.factory import apple as apple_factory
+from tests.factory import google as google_factory
+
+
+class PublicKey(TestCase):
+    def setUp(self):
+        self.root_cn = 'pyattest-testing-leaf.ch'
+        self.root_ca = load_pem_x509_certificate(pkgutil.get_data('pyattest', 'testutils/fixtures/root_cert.pem'))
+        self.root_ca_pem = self.root_ca.public_bytes(serialization.Encoding.PEM)
+        self.rf = RequestFactory()
+
+    @patch('dreiattest.key.AppleConfig')
+    def test_can_create_key_with_apple_driver(self, mock_config):
+        """ Mock the apple config so we can inject our custom root_ca which is also used in the apple_factory. """
+        device_session = DeviceSession(session_id=uuid.uuid4(), user_id='test')
+        device_session.save()
+        nonce = create_nonce(device_session)
+
+        attest, public_key = apple_factory.get(app_id='foo', nonce=nonce, device_session=device_session)
+        key_id = sha256(public_key).digest()
+        mock_config.return_value = AppleConfig(key_id=key_id, app_id='foo', production=False,
+                                               root_ca=self.root_ca_pem)
+
+        data = {
+            'driver': 'apple',
+            'key_id': base64.b64encode(key_id).decode('utf-8'),
+            'attestation': base64.b64encode(attest).decode('utf-8'),
+        }
+        request = self.rf.post('/foo', data, content_type='application/json')
+
+        key = key_from_request(request, nonce, device_session)
+        self.assertEqual(key.public_key_id, base64.b64encode(key_id).decode())
+
+    @patch('dreiattest.key.GoogleConfig')
+    def test_can_create_key_with_google_driver(self, mock_config):
+        """ Mock the google config so we can inject our custom root_ca which is also used in the apple_factory. """
+        device_session = DeviceSession(session_id=uuid.uuid4(), user_id='test')
+        device_session.save()
+        nonce = create_nonce(device_session)
+
+        attest, key_id = google_factory.get(apk_package_name='foo', nonce=nonce, device_session=device_session)
+        mock_config.return_value = GoogleConfig(key_ids=[base64.b64encode(key_id)], apk_package_name='foo',
+                                                root_cn=self.root_cn, root_ca=self.root_ca_pem, production=False)
+
+        data = {
+            'driver': 'google',
+            'key_id': base64.b64encode(key_id).decode('utf-8'),
+            'attestation': base64.b64encode(attest.encode()).decode('utf-8'),
+        }
+        request = self.rf.post('/foo', data, content_type='application/json')
+
+        key = key_from_request(request, nonce, device_session)
+        self.assertEqual(key.public_key_id, base64.b64encode(key_id).decode())

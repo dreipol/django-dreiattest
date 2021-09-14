@@ -3,14 +3,10 @@ name = "pypi"
 url = "https://pypi.org/simple"
 verify_ssl = true
 
-[dev-packages]
-pytest-cov = "*"
-pytest = "*"
-twine = "*"
-
 [packages]
 django = "==2.*"
-pyattest = "==0.0.*"
+pyattest = "==0.0.7"
+twine = "*"
 
 [scripts]
 tests = "pytest"

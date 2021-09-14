@@ -1,2 +1,3 @@
 include README.md LICENSE
 recursive-include dreiattest *.html
+exclude manage.py
