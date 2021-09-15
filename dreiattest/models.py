@@ -29,7 +29,7 @@ class DeviceSession(Model):
 
     def __str__(self):
         session_id = str(self.session_id).upper()
-        return f'{self.user_id};{session_id}'
+        return f'{self.user_id};{session_id.lower()}'
 
 
 class Nonce(Model):

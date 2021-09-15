@@ -12,3 +12,7 @@ class InvalidHeaderException(DreiAttestException):
 
 class InvalidPayloadException(DreiAttestException):
     pass
+
+
+class UnsupportedEncryptionException(DreiAttestException):
+    pass

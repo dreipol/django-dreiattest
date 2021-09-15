@@ -1,6 +1,7 @@
 import base64
 import datetime
 import pkgutil
+from hashlib import sha256
 
 import jwt
 from cryptography import x509
@@ -24,11 +25,12 @@ def get(apk_package_name: str, nonce: Nonce, device_session: DeviceSession, basi
     root_cert = load_pem_x509_certificate(pkgutil.get_data('pyattest', 'testutils/fixtures/root_cert.pem'))
 
     apk_cert_digest = apk_cert_digest or b'foobar'
-
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
     )
+    public_key = private_key.public_key().public_bytes(encoding=serialization.Encoding.DER,
+                                                       format=serialization.PublicFormat.PKCS1)
 
     subject = x509.Name([x509.NameAttribute(NameOID.ORGANIZATION_NAME, 'pyattest-testing-leaf')])
     cert = x509.CertificateBuilder() \
@@ -42,7 +44,9 @@ def get(apk_package_name: str, nonce: Nonce, device_session: DeviceSession, basi
         .add_extension(x509.SubjectAlternativeName([x509.DNSName('pyattest-testing-leaf.ch')]), critical=False) \
         .sign(root_key, hashes.SHA256())
 
-    nonce = (str(device_session) + base64.b64encode(apk_cert_digest).decode() + nonce.value).encode()
+    nonce = (str(device_session) + base64.b64encode(public_key).decode() + nonce.value)
+    nonce = sha256(nonce.encode()).digest()
+
     data = {
         'timestampMs': 9860437986543,
         'nonce': base64.b64encode(nonce).decode(),
@@ -61,4 +65,4 @@ def get(apk_package_name: str, nonce: Nonce, device_session: DeviceSession, basi
                                                                                         ''),
     ]}
 
-    return jwt.encode(data, private_key, algorithm='RS256', headers=headers), apk_cert_digest
+    return jwt.encode(data, private_key, algorithm='RS256', headers=headers), public_key

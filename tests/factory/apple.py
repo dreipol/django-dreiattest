@@ -11,7 +11,7 @@ from asn1crypto.core import OctetString
 from cryptography import x509
 from cryptography.hazmat._oid import ObjectIdentifier
 from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import rsa, ec
 from cryptography.hazmat.primitives.serialization.base import load_pem_private_key
 from cryptography.x509.base import load_pem_x509_certificate
 from cryptography.x509.extensions import UnrecognizedExtension
@@ -28,13 +28,10 @@ def get(app_id: str, nonce: Nonce, device_session: DeviceSession, aaguid: bytes 
     root_key = load_pem_private_key(pkgutil.get_data('pyattest', 'testutils/fixtures/root_key.pem'), b'123')
     root_cert = load_pem_x509_certificate(pkgutil.get_data('pyattest', 'testutils/fixtures/root_cert.pem'))
 
-    private_key = rsa.generate_private_key(
-        public_exponent=65537,
-        key_size=2048,
-    )
+    private_key = ec.generate_private_key(ec.SECP384R1())
 
-    public_key = private_key.public_key().public_bytes(encoding=serialization.Encoding.DER,
-                                                       format=serialization.PublicFormat.PKCS1)
+    public_key = private_key.public_key().public_bytes(encoding=serialization.Encoding.X962,
+                                                       format=serialization.PublicFormat.UncompressedPoint)
 
     auth_data_public_key = public_key if not wrong_public_key else 'XXXXX'.encode()
 
