@@ -48,18 +48,9 @@ class Key(Model):
     device_session = ForeignKey(DeviceSession, on_delete=PROTECT)
     public_key_id = CharField(max_length=255)
     public_key = TextField()
+    driver = CharField(max_length=255)
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
 
     def load_pem(self) -> _PUBLIC_KEY_TYPES:
         return load_pem_public_key(self.public_key.encode())
-
-    def verify(self, signature_header: bytes, nonce: bytes) -> None:
-        pem_key = self.load_pem()
-
-        if isinstance(pem_key, ec.EllipticCurvePublicKey):
-            config = AppleConfig(key_id=base64.b64decode(self.public_key_id),
-                                 app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
-                                 production=dreiattest_settings.DREIATTEST_PRODUCTION)
-
-            AppleVerifier.verify_assertion(signature_header, nonce, pem_key, config)

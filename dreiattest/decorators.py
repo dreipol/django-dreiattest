@@ -1,16 +1,30 @@
-from base64 import b64decode
+import base64
 from functools import wraps
 from hashlib import sha256
 
-from cryptography.exceptions import InvalidSignature
 from django.core.handlers.wsgi import WSGIRequest
-from django.http import JsonResponse
+from pyattest.assertion import Assertion
+from pyattest.configs.apple import AppleConfig
 
 from dreiattest.device_session import device_session_from_request
-from dreiattest.exceptions import InvalidHeaderException
+from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException
 from dreiattest.helpers import request_hash
 from dreiattest.models import Key
 from . import settings as dreiattest_settings
+
+
+def verify_assertion(key: Key, nonce: str, assertion: str, expected_hash: bytes):
+    expected_hash = sha256(expected_hash.decode() + nonce).digest()
+
+    if key.driver == 'apple':
+        pem_key = key.load_pem()
+        config = AppleConfig(key_id=base64.b64decode(key.public_key_id),
+                             app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
+                             production=dreiattest_settings.DREIATTEST_PRODUCTION)
+        assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config)
+        assertion.verify()
+    else:
+        raise InvalidDriverException
 
 
 def signature_required():
@@ -19,23 +33,18 @@ def signature_required():
     def decorator(func):
         @wraps(func)
         def inner(request: WSGIRequest, *args, **kwargs):
-            try:
-                session = device_session_from_request(request, create=False)
-                public_key = Key.objects.filter(device_session=session).order_by('-id').first()
-                if not public_key:
-                    raise InvalidHeaderException
+            session = device_session_from_request(request, create=False)
+            public_key = Key.objects.filter(device_session=session).order_by('-id').first()
+            if not public_key:
+                raise InvalidHeaderException
 
-                nonce_header = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode("utf-8")
-                signature_header = b64decode(request.META.get(dreiattest_settings.DREIATTEST_SIGNATURE_HEADER, ''))
+            nonce = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode("utf-8")
+            assertion = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADER, '')
+            headers = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADERS_HEADER, '')
+            expected_hash = request_hash(request, ','.split(headers))
 
-                expected_client_data_hash = request_hash(request).digest()
-                client_data_with_nonce = sha256(expected_client_data_hash + nonce_header).digest()
+            verify_assertion(public_key, nonce, assertion, expected_hash)
 
-                public_key.verify(signature_header, client_data_with_nonce)
-            except InvalidHeaderException as exception:
-                return JsonResponse({'error': 'Invalid or missing json payload.'}, status=403)
-            except InvalidSignature as exception:
-                return JsonResponse({'error': 'Invalid signature.'}, status=403)
             return func(request, *args, **kwargs)
 
         return inner

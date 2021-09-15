@@ -28,16 +28,19 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
     except JSONDecodeError:
         raise InvalidPayloadException
 
-    driver = drivers.get(data.get('driver', None), None)
-    if not driver:
+    driver = data.get('driver', None)
+    driver_handler = drivers.get(driver, None)
+    if not driver_handler:
         raise InvalidDriverException
 
-    attestation, public_key = driver(data, device_session, nonce)
+    attestation, public_key = driver_handler(data, device_session, nonce)
+    data = {
+        'public_key': public_key,
+        'public_key_id': get_key_id(public_key),
+        'driver': driver
+    }
 
-    key, _ = Key.objects.update_or_create(
-        device_session=device_session,
-        defaults={'public_key': public_key, 'public_key_id': get_key_id(public_key)}
-    )
+    key, _ = Key.objects.update_or_create(device_session=device_session, defaults=data)
     nonce.mark_used()
 
     return key
