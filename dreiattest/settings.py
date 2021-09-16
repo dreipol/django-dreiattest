@@ -10,7 +10,7 @@ DREIATTEST_UID_HEADER = getattr(settings, 'DREIATTEST_UID_HEADER', 'HTTP_DREIATT
 DREIATTEST_ASSERTION_HEADER = getattr(settings, 'DREIATTEST_ASSERTION_HEADER', 'HTTP_DREIATTEST_ASSERTION')
 
 # Header containing the list of comma separated headers that are included in the assertion
-DREIATTEST_ASSERTION_HEADERS_HEADER = getattr(settings, 'DREIATTEST_ASSERTION_HEADERS_HEADER', 'DREIATTEST_ASSERTION_HEADERS')
+DREIATTEST_USER_HEADERS_HEADER = getattr(settings, 'DREIATTEST_USER_HEADERS_HEADER', 'DREIATTEST_USER_HEADERS')
 
 # Header containing the server nonce that was used inside the attestation
 DREIATTEST_NONCE_HEADER = getattr(settings, 'DREIATTEST_NONCE_HEADER', 'HTTP_DREIATTEST_NONCE')

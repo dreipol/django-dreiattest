@@ -18,7 +18,7 @@ def request_hash(request: WSGIRequest, header_keys: list) -> bytes:
     method = request.method.encode()
     body = request.body
 
-    headers = {key: request.headers.get(key) for key in header_keys}
+    headers = {key: request.headers.get(key) for key in filter(None, header_keys)}
     headers_json = json.dumps(headers, sort_keys=True, indent=None, separators=(',', ':'))
 
     data = uri + method + headers_json.encode('utf-8') + body
