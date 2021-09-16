@@ -40,7 +40,7 @@ def signature_required():
 
             nonce = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode("utf-8")
             assertion = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADER, '')
-            headers = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADERS_HEADER, '')
+            headers = request.META.get(dreiattest_settings.DREIATTEST_USER_HEADERS_HEADER, '')
             expected_hash = request_hash(request, headers.split(','))
 
             verify_assertion(public_key, nonce, assertion, expected_hash)
