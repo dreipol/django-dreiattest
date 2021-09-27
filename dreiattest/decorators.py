@@ -13,8 +13,8 @@ from dreiattest.models import Key
 from . import settings as dreiattest_settings
 
 
-def verify_assertion(key: Key, nonce: str, assertion: str, expected_hash: bytes):
-    expected_hash = sha256(expected_hash.decode() + nonce).digest()
+def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: bytes):
+    expected_hash = sha256(expected_hash + nonce).digest()
 
     if key.driver == 'apple':
         pem_key = key.load_pem()
