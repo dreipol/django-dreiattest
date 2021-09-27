@@ -5,6 +5,7 @@ from hashlib import sha256
 from django.core.handlers.wsgi import WSGIRequest
 from pyattest.assertion import Assertion
 from pyattest.configs.apple import AppleConfig
+from pyattest.configs.google import GoogleConfig
 
 from dreiattest.device_session import device_session_from_request
 from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException
@@ -14,17 +15,23 @@ from . import settings as dreiattest_settings
 
 
 def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: bytes):
-    expected_hash = sha256(expected_hash + nonce).digest()
-
     if key.driver == 'apple':
-        pem_key = key.load_pem()
         config = AppleConfig(key_id=base64.b64decode(key.public_key_id),
                              app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
                              production=dreiattest_settings.DREIATTEST_PRODUCTION)
-        assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config)
-        assertion.verify()
+    elif key.driver == 'google':
+        key_id = base64.b64encode(bytes.fromhex(dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST))
+        config = GoogleConfig(key_ids=[key_id],
+                              apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
+                              production=dreiattest_settings.DREIATTEST_PRODUCTION)
     else:
         raise InvalidDriverException
+
+    expected_hash = sha256(expected_hash + nonce).digest()
+    pem_key = key.load_pem()
+
+    assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config)
+    assertion.verify()
 
 
 def signature_required():
