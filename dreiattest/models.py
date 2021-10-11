@@ -1,21 +1,6 @@
-import base64
 from datetime import datetime
-from cryptography.hazmat.primitives.asymmetric.ec import ECDSA
 from django.db.models import Model, CharField, UUIDField, DateTimeField, ForeignKey, PROTECT, TextField
 from cryptography.hazmat.primitives.serialization.base import load_pem_public_key
-from cryptography.hazmat._types import _PUBLIC_KEY_TYPES
-from cryptography.hazmat.primitives import hashes
-from . import settings as dreiattest_settings
-
-from cryptography.hazmat.primitives.asymmetric import (
-    dsa,
-    ec,
-    ed25519,
-    ed448,
-    rsa,
-)
-from pyattest.configs.apple import AppleConfig
-from pyattest.verifiers.apple import AppleVerifier
 
 
 class DeviceSession(Model):
@@ -52,5 +37,5 @@ class Key(Model):
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
 
-    def load_pem(self) -> _PUBLIC_KEY_TYPES:
+    def load_pem(self):
         return load_pem_public_key(self.public_key.encode())
