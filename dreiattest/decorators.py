@@ -34,18 +34,35 @@ def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: byte
     assertion.verify()
 
 
+def should_bypass(request: WSGIRequest) -> bool:
+    """
+    Check if given requests can be bypassed. This is the case if the client sends us a shared secret
+    via the bypass-header and this value matches with ou configured bypass secret.
+    """
+    shared_secret = request.META.get(dreiattest_settings.DREIATTEST_BYPASS_HEADER, None)
+    expected_shared_secret = dreiattest_settings.DREIATTEST_BYPASS_SECRET
+
+    if not shared_secret or not expected_shared_secret:
+        return False
+
+    return shared_secret == expected_shared_secret
+
+
 def signature_required():
     """ Check that the given request has a valid signature from a known device session. """
 
     def decorator(func):
         @wraps(func)
         def inner(request: WSGIRequest, *args, **kwargs):
+            if should_bypass(request):
+                return func(request, *args, **kwargs)
+
             session = device_session_from_request(request, create=False)
             public_key = Key.objects.filter(device_session=session).order_by('-id').first()
             if not public_key:
                 raise InvalidHeaderException
 
-            nonce = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode("utf-8")
+            nonce = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode('utf-8')
             assertion = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADER, '')
             headers = request.META.get(dreiattest_settings.DREIATTEST_USER_HEADERS_HEADER, '')
             expected_hash = request_hash(request, headers.split(','))

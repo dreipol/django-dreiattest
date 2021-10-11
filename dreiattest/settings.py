@@ -15,6 +15,9 @@ DREIATTEST_USER_HEADERS_HEADER = getattr(settings, 'DREIATTEST_USER_HEADERS_HEAD
 # Header containing the server nonce that was used inside the attestation
 DREIATTEST_NONCE_HEADER = getattr(settings, 'DREIATTEST_NONCE_HEADER', 'HTTP_DREIATTEST_NONCE')
 
+# Header containing the shared secret to bypass the verification process. Helpfull for debugging
+DREIATTEST_BYPASS_HEADER = getattr(settings, 'DREIATTEST_BYPASS_HEADER', 'HTTP_DREIATTEST_SHARED_SECRET')
+
 # Header containing the apple app id
 DREIATTEST_APPLE_APPID = getattr(settings, 'DREIATTEST_APPLE_APPID', None)
 
@@ -27,3 +30,5 @@ DREIATTEST_PRODUCTION = getattr(settings, 'DREIATTEST_PRODUCTION', True)
 # SHA256 hex of the Google APK Certificate
 DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST = getattr(settings, 'DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST', None)
 
+# If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.
+DREIATTEST_BYPASS_SECRET = getattr(settings, 'DREIATTEST_BYPASS_SECRET', None)
