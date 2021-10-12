@@ -24,7 +24,7 @@ def nonce_from_request(request: WSGIRequest, device_session: DeviceSession) -> N
     if not header:
         raise InvalidHeaderException
 
-    one_minute_ago = datetime.now() - timedelta(minutes=100)
+    one_minute_ago = datetime.now() - timedelta(minutes=1)
     nonce = Nonce.objects.filter(
         value=header,
         device_session=device_session,

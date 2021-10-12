@@ -28,7 +28,7 @@ class HandleDreiattestExceptionsMiddleware(object):
         if code.endswith('Exception'):
             code = code[:-9]
 
-        response = JsonResponse(data={'code': code}, status=400)
+        response = JsonResponse(data={'code': code}, status=403)
         response['Dreiattest-error'] = self.get_header(exception)
 
         return response
