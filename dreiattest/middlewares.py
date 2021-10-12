@@ -1,8 +1,15 @@
+from cryptography.exceptions import InvalidSignature, InvalidKey
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
-from pyattest.exceptions import PyAttestException
+from pyattest.exceptions import PyAttestException, InvalidNonceException, InvalidCertificateChainException, \
+    InvalidKeyIdException, ExtensionNotFoundException
 
-from dreiattest.exceptions import DreiAttestException
+from dreiattest.exceptions import DreiAttestException, UnsupportedEncryptionException
+
+relevant_base = (PyAttestException, DreiAttestException, InvalidSignature, InvalidKey)
+nonce_mismatch = (InvalidNonceException,)
+invalid_key = (InvalidCertificateChainException, InvalidKeyIdException, UnsupportedEncryptionException,
+               ExtensionNotFoundException, InvalidSignature, InvalidKey)
 
 
 class HandleDreiattestExceptionsMiddleware(object):
@@ -13,7 +20,7 @@ class HandleDreiattestExceptionsMiddleware(object):
         return self.get_response(request)
 
     def process_exception(self, request: WSGIRequest, exception: Exception):
-        if isinstance(exception, (PyAttestException, DreiAttestException)):
+        if isinstance(exception, relevant_base):
             return self.handle(request, exception)
 
     def handle(self, request: WSGIRequest, exception: Exception):
@@ -21,4 +28,17 @@ class HandleDreiattestExceptionsMiddleware(object):
         if code.endswith('Exception'):
             code = code[:-9]
 
-        return JsonResponse(data={'code': code}, status=400)
+        response = JsonResponse(data={'code': code}, status=400)
+        response['Dreiattest-error'] = self.get_header(exception)
+
+        return response
+
+    def get_header(self, exception: Exception) -> str:
+        """ Set some custom headers for the mobile clients. """
+        if isinstance(exception, nonce_mismatch):
+            return 'dreiAttest_nonce_mismatch'
+
+        if isinstance(exception, invalid_key):
+            return 'dreiAttest_invalid_key'
+
+        return 'dreiAttest_policy_violation'
