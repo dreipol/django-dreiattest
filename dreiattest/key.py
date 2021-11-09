@@ -9,13 +9,24 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from django.core.handlers.wsgi import WSGIRequest
+from django.utils.module_loading import import_string
 from pyattest.attestation import Attestation
 from pyattest.configs.apple import AppleConfig
 from pyattest.configs.google import GoogleConfig
 
 from dreiattest.models import Nonce, Key, DeviceSession
-from . import settings as dreiattest_settings
-from .exceptions import InvalidPayloadException, InvalidDriverException, UnsupportedEncryptionException
+from dreiattest import settings as dreiattest_settings
+from dreiattest.exceptions import InvalidPayloadException, InvalidDriverException, UnsupportedEncryptionException
+
+
+def resolve_plugins(request: WSGIRequest, attestation: Attestation):
+    plugins = []
+    for plugin in dreiattest_settings.DREIATTEST_PLUGINS:
+        mod = import_string(plugin)
+        plugins.append(mod)
+
+    for plugin in plugins:
+        plugin().run(request, attestation)
 
 
 def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceSession) -> Key:
@@ -39,6 +50,8 @@ def key_from_request(request: WSGIRequest, nonce: Nonce, device_session: DeviceS
         'public_key_id': get_key_id(public_key),
         'driver': driver
     }
+
+    resolve_plugins(request, attestation)
 
     key, _ = Key.objects.update_or_create(device_session=device_session, defaults=data)
     nonce.mark_used()

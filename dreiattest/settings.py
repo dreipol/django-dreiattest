@@ -32,3 +32,6 @@ DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST = getattr(settings, 'DREIATTEST_GOOGLE_
 
 # If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.
 DREIATTEST_BYPASS_SECRET = getattr(settings, 'DREIATTEST_BYPASS_SECRET', None)
+
+# Give the user a chance to hook into the key registration process
+DREIATTEST_PLUGINS = getattr(settings, 'DREIATTEST_PLUGINS', [])
