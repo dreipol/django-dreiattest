@@ -7,7 +7,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.x509.base import load_pem_x509_certificate
 from pyattest.configs.google import GoogleConfig
 
-from dreiattest.key import resolve_plugins
+from dreiattest.key import key_from_request
 from dreiattest.models import DeviceSession
 from django.test import RequestFactory
 from django.test import TestCase
@@ -26,6 +26,7 @@ class Plugins(TestCase):
 
     @patch('dreiattest.key.GoogleConfig')
     def test_plugins_run(self, mock_config):
+        dreiattest_settings.DREIATTEST_PLUGINS = ['dreiattest.plugins.DummyPlugin']
         device_session = DeviceSession(session_id=uuid.uuid4(), user_id='test')
         device_session.save()
         nonce = create_nonce(device_session)
@@ -36,8 +37,11 @@ class Plugins(TestCase):
         mock_config.return_value = GoogleConfig(key_ids=[base64.b64encode(apk_cert_digest)], apk_package_name='foo',
                                                 root_cn=self.root_cn, root_ca=self.root_ca_pem, production=False)
 
-        data = {}
+        data = {
+            'driver': 'google',
+            'public_key': base64.b64encode(public_key).decode(),
+            'attestation': attest,
+        }
         request = self.rf.post('/foo', data, content_type='application/json')
-        dreiattest_settings.DREIATTEST_PLUGINS = ['dreiattest.plugins.DummyPlugin']
-        print(dreiattest_settings.DREIATTEST_PLUGINS)
-        resolve_plugins(request, attest)
+
+        key = key_from_request(request, nonce, device_session)
