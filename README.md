@@ -74,5 +74,5 @@ MIDDLEWARE = [
 
 - Create a branch from `master` for possible pull requests
 - To publish a new version to pypi:
-  - Update the version in `__version.py` 
+  - Update the version in `__version__.py` 
   - Trigger `$ pipenv run upload` - This will automatically create and push the correct tag in git and upload that version to pypi
