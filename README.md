@@ -36,6 +36,7 @@ These are all the possible config values and what they do.
 - DREIATTEST_GOOGLE_APK_NAME: Header containing the google apk name
 - DREIATTEST_PRODUCTION: Indicating if we're in a production environment or not. Some extra verifications are made if this is true. Those are described in the [pyttest](https://github.com/dreipol/pyattest) readme.
 - DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST: SHA256 hex of the Google APK Certificate
+- DREIATTEST_PLUGINS: List of classes implementing `BasePlugin` - gives you the option to handle extra verification
 - DREIATTEST_BYPASS_SECRET: **DANGERZONE** If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.
 
 You can find the default value (if any) for each of them in the [settings.py](https://github.com/dreipol/django-dreiattest/blob/master/dreiattest/settings.py)
