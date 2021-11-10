@@ -8,8 +8,3 @@ class BasePlugin(ABC):
     @abstractmethod
     def run(self, request: WSGIRequest, attestation: Attestation):
         ...
-
-
-class DummyPlugin(BasePlugin):
-    def run(self, request: WSGIRequest, attestation: Attestation):
-        breakpoint()
