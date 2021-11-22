@@ -4,12 +4,12 @@ from django.http import JsonResponse
 from pyattest.exceptions import PyAttestException, InvalidNonceException, InvalidCertificateChainException, \
     InvalidKeyIdException, ExtensionNotFoundException
 
-from dreiattest.exceptions import DreiAttestException, UnsupportedEncryptionException
+from dreiattest.exceptions import DreiAttestException, UnsupportedEncryptionException, NoKeyForSessionException
 
 relevant_base = (PyAttestException, DreiAttestException, InvalidSignature, InvalidKey)
 nonce_mismatch = (InvalidNonceException,)
 invalid_key = (InvalidCertificateChainException, InvalidKeyIdException, UnsupportedEncryptionException,
-               ExtensionNotFoundException, InvalidSignature, InvalidKey)
+               ExtensionNotFoundException, InvalidSignature, InvalidKey, NoKeyForSessionException)
 
 
 class HandleDreiattestExceptionsMiddleware(object):

@@ -8,7 +8,7 @@ from pyattest.configs.apple import AppleConfig
 from pyattest.configs.google import GoogleConfig
 
 from dreiattest.device_session import device_session_from_request
-from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException
+from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException, NoKeyForSessionException
 from dreiattest.helpers import request_hash
 from dreiattest.models import Key
 from . import settings as dreiattest_settings
@@ -58,9 +58,12 @@ def signature_required():
                 return func(request, *args, **kwargs)
 
             session = device_session_from_request(request, create=False)
+            if not session:
+                raise InvalidHeaderException
+
             public_key = Key.objects.filter(device_session=session).order_by('-id').first()
             if not public_key:
-                raise InvalidHeaderException
+                raise NoKeyForSessionException
 
             nonce = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode('utf-8')
             assertion = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADER, '')
