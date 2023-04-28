@@ -5,7 +5,7 @@ verify_ssl = true
 
 [packages]
 django = "==2.*"
-pyattest = "==0.0.8"
+pyattest = "==0.0.10"
 twine = "*"
 
 [scripts]
