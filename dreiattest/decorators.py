@@ -6,6 +6,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from pyattest.assertion import Assertion
 from pyattest.configs.apple import AppleConfig
 from pyattest.configs.google import GoogleConfig
+from pyattest.configs.google_play_integrity_api import GooglePlayIntegrityApiConfig
 
 from dreiattest.device_session import device_session_from_request
 from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException, NoKeyForSessionException
@@ -24,6 +25,13 @@ def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: byte
         config = GoogleConfig(key_ids=[key_id],
                               apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
                               production=dreiattest_settings.DREIATTEST_PRODUCTION)
+    elif key.driver == 'google_play_integrity_api':
+        config = GooglePlayIntegrityApiConfig(
+            decryption_key=dreiattest_settings.DREIATTEST_GOOGLE_DECRYPTION_KEY,
+            verification_key=dreiattest_settings.DREIATTEST_GOOGLE_VERIFICATION_KEY,
+            apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
+            production=dreiattest_settings.DREIATTEST_PRODUCTION
+        )
     else:
         raise InvalidDriverException
 

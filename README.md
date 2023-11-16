@@ -22,7 +22,8 @@ urlpatterns = [
 There are multiple settings you can and or have to set in your settings.py. The following are mandatory:
 
 - **Apple**: `DREIATTEST_APPLE_APPID` 
-- **Google**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST`
+- **Google (Legacy: Safety Net)**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST`
+- **Google Play Integrity API**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_DECRYPTION_KEY`, `DREIATTEST_GOOGLE_VERIFICATION_KEY`
 
 These are all the possible config values and what they do.
 
@@ -34,6 +35,8 @@ These are all the possible config values and what they do.
 - DREIATTEST_BYPASS_HEADER: Header containing the shared secret to bypass the verification process. Helpfull for debugging
 - DREIATTEST_APPLE_APPID: Header containing the apple app id
 - DREIATTEST_GOOGLE_APK_NAME: Header containing the google apk name
+- DREIATTEST_GOOGLE_DECRYPTION_KEY: A Base64 encoded AES key secret as described [here](https://developer.android.com/google/play/integrity/verdict#decrypt-verify)
+- DREIATTEST_GOOGLE_VERIFICATION_KEY: A Base64 encoded public key as described [here](https://developer.android.com/google/play/integrity/verdict#decrypt-verify)
 - DREIATTEST_PRODUCTION: Indicating if we're in a production environment or not. Some extra verifications are made if this is true. Those are described in the [pyttest](https://github.com/dreipol/pyattest) readme.
 - DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST: SHA256 hex of the Google APK Certificate
 - DREIATTEST_PLUGINS: List of classes implementing `BasePlugin` - gives you the option to handle extra verification

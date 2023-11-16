@@ -35,3 +35,11 @@ DREIATTEST_BYPASS_SECRET = getattr(settings, 'DREIATTEST_BYPASS_SECRET', None)
 
 # Give the user a chance to hook into the key registration process
 DREIATTEST_PLUGINS = getattr(settings, 'DREIATTEST_PLUGINS', [])
+
+# The decryption key of the play integrity api
+# see: https://developer.android.com/google/play/integrity/setup#switching-api-key-management
+DREIATTEST_GOOGLE_DECRYPTION_KEY = getattr(settings, 'DREIATTEST_GOOGLE_DECRYPTION_KEY', None)
+
+# The verification key of the play integrity api
+# see: https://developer.android.com/google/play/integrity/setup#switching-api-key-management
+DREIATTEST_GOOGLE_VERIFICATION_KEY = getattr(settings, 'DREIATTEST_GOOGLE_VERIFICATION_KEY', None)
