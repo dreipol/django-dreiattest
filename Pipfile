@@ -4,8 +4,8 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [packages]
-django = "==2.*"
-pyattest = "==0.0.8"
+django = "<5"
+pyattest = "==0.0.*"
 twine = "*"
 
 [scripts]
@@ -14,4 +14,4 @@ coverage = "pytest --cov=pyattest tests/"
 upload = "python setup.py upload"
 
 [requires]
-python_version = "3.8"
+python_version = "3.11"

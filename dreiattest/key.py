@@ -12,11 +12,13 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.utils.module_loading import import_string
 from pyattest.attestation import Attestation
 from pyattest.configs.apple import AppleConfig
+from pyattest.configs.config import Config
 from pyattest.configs.google import GoogleConfig
+from pyattest.configs.google_play_integrity_api import GooglePlayIntegrityApiConfig
 
-from dreiattest.models import Nonce, Key, DeviceSession
 from dreiattest import settings as dreiattest_settings
 from dreiattest.exceptions import InvalidPayloadException, InvalidDriverException, UnsupportedEncryptionException
+from dreiattest.models import Nonce, Key, DeviceSession
 
 
 def resolve_plugins(request: WSGIRequest, attestation: Attestation):
@@ -78,16 +80,11 @@ def get_key_id(pem_public_key: str) -> str:
     return base64.b64encode(sha256(public_key_formatted).digest()).decode()
 
 
-def google(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Attestation, str]:
+def google(data: dict, device_session: DeviceSession, nonce: Nonce, config: Config) -> Tuple[Attestation, str]:
     attestation = data.get('attestation', None)
     public_key = data.get('public_key', None)  # base64 encoded
     if not attestation or not public_key:
         raise InvalidPayloadException
-
-    key_id = base64.b64encode(bytes.fromhex(dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST))
-    config = GoogleConfig(key_ids=[key_id],
-                          apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
-                          production=dreiattest_settings.DREIATTEST_PRODUCTION)
 
     nonce = (str(device_session) + public_key + nonce.value)
     nonce = sha256(nonce.encode()).digest()
@@ -100,6 +97,26 @@ def google(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Att
     public_key = public_key.public_bytes(serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo)
 
     return attestation, public_key.decode()
+
+
+def google_safety_net(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Attestation, str]:
+    key_id = base64.b64encode(bytes.fromhex(dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST))
+    config = GoogleConfig(
+        key_ids=[key_id],
+        apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
+        production=dreiattest_settings.DREIATTEST_PRODUCTION
+    )
+    return google(data, device_session, nonce, config)
+
+
+def google_play_integrity_api(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Attestation, str]:
+    config = GooglePlayIntegrityApiConfig(
+        decryption_key=dreiattest_settings.DREIATTEST_GOOGLE_DECRYPTION_KEY,
+        verification_key=dreiattest_settings.DREIATTEST_GOOGLE_VERIFICATION_KEY,
+        apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
+        production=dreiattest_settings.DREIATTEST_PRODUCTION
+    )
+    return google(data, device_session, nonce, config)
 
 
 def apple(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Attestation, str]:
@@ -123,6 +140,7 @@ def apple(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Atte
 
 
 drivers = {
-    'google': google,
+    'google': google_safety_net,
+    'google_play_integrity_api': google_play_integrity_api,
     'apple': apple,
 }
