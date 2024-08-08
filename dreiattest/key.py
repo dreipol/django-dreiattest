@@ -19,6 +19,7 @@ from pyattest.configs.google_play_integrity_api import GooglePlayIntegrityApiCon
 from dreiattest import settings as dreiattest_settings
 from dreiattest.exceptions import InvalidPayloadException, InvalidDriverException, UnsupportedEncryptionException
 from dreiattest.models import Nonce, Key, DeviceSession
+from .generate_config import apple_config, google_safety_net_config, google_play_integrity_api_config
 
 
 def resolve_plugins(request: WSGIRequest, attestation: Attestation):
@@ -100,22 +101,16 @@ def google(data: dict, device_session: DeviceSession, nonce: Nonce, config: Conf
 
 
 def google_safety_net(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Attestation, str]:
-    key_id = base64.b64encode(bytes.fromhex(dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST))
-    config = GoogleConfig(
-        key_ids=[key_id],
-        apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
-        production=dreiattest_settings.DREIATTEST_PRODUCTION
-    )
+    config = google_safety_net_config()
     return google(data, device_session, nonce, config)
 
 
 def google_play_integrity_api(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Attestation, str]:
-    config = GooglePlayIntegrityApiConfig(
-        decryption_key=dreiattest_settings.DREIATTEST_GOOGLE_DECRYPTION_KEY,
-        verification_key=dreiattest_settings.DREIATTEST_GOOGLE_VERIFICATION_KEY,
-        apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
-        production=dreiattest_settings.DREIATTEST_PRODUCTION
-    )
+    if dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST:
+        signatures = [dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST]
+    else:
+        signatures = None
+    config = google_play_integrity_api_config()
     return google(data, device_session, nonce, config)
 
 
@@ -125,8 +120,7 @@ def apple(data: dict, device_session: DeviceSession, nonce: Nonce) -> Tuple[Atte
     if not attestation or not public_key_id:
         raise InvalidPayloadException
 
-    config = AppleConfig(key_id=base64.b64decode(public_key_id), app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
-                         production=dreiattest_settings.DREIATTEST_PRODUCTION)
+    config = apple_config(public_key_id)
 
     nonce = (str(device_session) + public_key_id + nonce.value).encode()
 

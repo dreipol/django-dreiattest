@@ -13,25 +13,16 @@ from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException
 from dreiattest.helpers import request_hash
 from dreiattest.models import Key
 from . import settings as dreiattest_settings
+from .generate_config import apple_config, google_safety_net_config, google_play_integrity_api_config
 
 
 def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: bytes):
     if key.driver == 'apple':
-        config = AppleConfig(key_id=base64.b64decode(key.public_key_id),
-                             app_id=dreiattest_settings.DREIATTEST_APPLE_APPID,
-                             production=dreiattest_settings.DREIATTEST_PRODUCTION)
+        config = apple_config(key.public_key_id)
     elif key.driver == 'google':
-        key_id = base64.b64encode(bytes.fromhex(dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST))
-        config = GoogleConfig(key_ids=[key_id],
-                              apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
-                              production=dreiattest_settings.DREIATTEST_PRODUCTION)
+        config = google_safety_net_config()
     elif key.driver == 'google_play_integrity_api':
-        config = GooglePlayIntegrityApiConfig(
-            decryption_key=dreiattest_settings.DREIATTEST_GOOGLE_DECRYPTION_KEY,
-            verification_key=dreiattest_settings.DREIATTEST_GOOGLE_VERIFICATION_KEY,
-            apk_package_name=dreiattest_settings.DREIATTEST_GOOGLE_APK_NAME,
-            production=dreiattest_settings.DREIATTEST_PRODUCTION
-        )
+        config = google_play_integrity_api_config()
     else:
         raise InvalidDriverException
 
