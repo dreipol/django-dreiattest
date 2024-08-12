@@ -6,5 +6,4 @@ from pyattest.attestation import Attestation
 
 class BasePlugin(ABC):
     @abstractmethod
-    def run(self, request: WSGIRequest, attestation: Attestation):
-        ...
+    def run(self, request: WSGIRequest, attestation: Attestation): ...
