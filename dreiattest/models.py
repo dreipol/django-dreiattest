@@ -1,5 +1,14 @@
 from datetime import datetime
-from django.db.models import Model, CharField, UUIDField, DateTimeField, ForeignKey, PROTECT, TextField, Index
+from django.db.models import (
+    Model,
+    CharField,
+    UUIDField,
+    DateTimeField,
+    ForeignKey,
+    PROTECT,
+    TextField,
+    Index,
+)
 from cryptography.hazmat.primitives.serialization.base import load_pem_public_key
 
 
@@ -10,13 +19,11 @@ class DeviceSession(Model):
     updated_at = DateTimeField(auto_now=True)
 
     class Meta:
-        indexes = [
-            Index(fields=['user_id', 'session_id'])
-        ]
+        indexes = [Index(fields=["user_id", "session_id"])]
 
     def __str__(self):
         session_id = str(self.session_id).upper()
-        return f'{self.user_id};{session_id.lower()}'
+        return f"{self.user_id};{session_id.lower()}"
 
 
 class Nonce(Model):

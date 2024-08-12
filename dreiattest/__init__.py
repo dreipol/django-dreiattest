@@ -1,1 +1,1 @@
-default_app_config = 'dreiattest.apps.DreiAttestConfig'
+default_app_config = "dreiattest.apps.DreiAttestConfig"

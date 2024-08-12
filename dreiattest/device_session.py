@@ -10,21 +10,29 @@ from .helpers import is_valid_uuid
 from .models import DeviceSession
 
 
-def get_or_create_device_session(user_id: str, session_id: UUID, create: bool = True) -> DeviceSession:
-    """ Return matching DeviceSession model from the db, user_id and session_id need to be validated."""
+def get_or_create_device_session(
+    user_id: str, session_id: UUID, create: bool = True
+) -> DeviceSession:
+    """Return matching DeviceSession model from the db, user_id and session_id need to be validated."""
     if create:
-        session, _ = DeviceSession.objects.get_or_create(session_id=session_id, user_id=user_id)
+        session, _ = DeviceSession.objects.get_or_create(
+            session_id=session_id, user_id=user_id
+        )
         return session
 
-    session = DeviceSession.objects.filter(session_id=session_id, user_id=user_id).first()
+    session = DeviceSession.objects.filter(
+        session_id=session_id, user_id=user_id
+    ).first()
     if not session:
         raise InvalidHeaderException
 
     return session
 
 
-def device_session_from_request(request: WSGIRequest, create: bool = True) -> DeviceSession:
-    """ Get the uid from given request. If the data is not present or valid an exception is raised. """
+def device_session_from_request(
+    request: WSGIRequest, create: bool = True
+) -> DeviceSession:
+    """Get the uid from given request. If the data is not present or valid an exception is raised."""
     header = request.META.get(dreiattest_settings.DREIATTEST_UID_HEADER, None)
     if not header:
         raise InvalidHeaderException
@@ -40,7 +48,7 @@ def parse_header(header: str) -> Optional[Tuple[str, UUID]]:
     session_id has to be a valid v4 uuid.
     """
     try:
-        user_id, session_id = header.split(';')
+        user_id, session_id = header.split(";")
     except ValueError:
         raise InvalidHeaderException
 
@@ -54,7 +62,7 @@ def parse_header(header: str) -> Optional[Tuple[str, UUID]]:
 
 
 def is_valid_user_id(user_id: str) -> bool:
-    if user_id == '':
+    if user_id == "":
         return True
 
     if len(user_id) > 128:

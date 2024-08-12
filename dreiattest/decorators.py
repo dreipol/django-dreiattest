@@ -9,19 +9,27 @@ from pyattest.configs.google import GoogleConfig
 from pyattest.configs.google_play_integrity_api import GooglePlayIntegrityApiConfig
 
 from dreiattest.device_session import device_session_from_request
-from dreiattest.exceptions import InvalidHeaderException, InvalidDriverException, NoKeyForSessionException
+from dreiattest.exceptions import (
+    InvalidHeaderException,
+    InvalidDriverException,
+    NoKeyForSessionException,
+)
 from dreiattest.helpers import request_hash
 from dreiattest.models import Key
 from . import settings as dreiattest_settings
-from .generate_config import apple_config, google_safety_net_config, google_play_integrity_api_config
+from .generate_config import (
+    apple_config,
+    google_safety_net_config,
+    google_play_integrity_api_config,
+)
 
 
 def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: bytes):
-    if key.driver == 'apple':
+    if key.driver == "apple":
         config = apple_config(key.public_key_id)
-    elif key.driver == 'google':
+    elif key.driver == "google":
         config = google_safety_net_config()
-    elif key.driver == 'google_play_integrity_api':
+    elif key.driver == "google_play_integrity_api":
         config = google_play_integrity_api_config()
     else:
         raise InvalidDriverException
@@ -48,7 +56,7 @@ def should_bypass(request: WSGIRequest) -> bool:
 
 
 def signature_required():
-    """ Check that the given request has a valid signature from a known device session. """
+    """Check that the given request has a valid signature from a known device session."""
 
     def decorator(func):
         @wraps(func)
@@ -60,14 +68,22 @@ def signature_required():
             if not session:
                 raise InvalidHeaderException
 
-            public_key = Key.objects.filter(device_session=session).order_by('-id').first()
+            public_key = (
+                Key.objects.filter(device_session=session).order_by("-id").first()
+            )
             if not public_key:
                 raise NoKeyForSessionException
 
-            nonce = request.META.get(dreiattest_settings.DREIATTEST_NONCE_HEADER).encode('utf-8')
-            assertion = request.META.get(dreiattest_settings.DREIATTEST_ASSERTION_HEADER, '')
-            headers = request.META.get(dreiattest_settings.DREIATTEST_USER_HEADERS_HEADER, '')
-            expected_hash = request_hash(request, headers.split(','))
+            nonce = request.META.get(
+                dreiattest_settings.DREIATTEST_NONCE_HEADER
+            ).encode("utf-8")
+            assertion = request.META.get(
+                dreiattest_settings.DREIATTEST_ASSERTION_HEADER, ""
+            )
+            headers = request.META.get(
+                dreiattest_settings.DREIATTEST_USER_HEADERS_HEADER, ""
+            )
+            expected_hash = request_hash(request, headers.split(","))
 
             verify_assertion(public_key, nonce, assertion, expected_hash)
 
