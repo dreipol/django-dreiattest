@@ -1,6 +1,6 @@
 # django-dreiattest
 
-dreiattest leverages [pyttest](https://github.com/dreipol/pyattest) and integrates it into django. It handles routing, different config options and persistence of tokens and public keys. To use dreiAttest you need to use the corresponing libraries for [iOS](https://github.com/dreipol/dreiAttest-ios) and [Android / Kotlin Multiplatform](https://github.com/dreipol/dreiAttest-android).
+dreiattest leverages [pyattest](https://github.com/dreipol/pyattest) and integrates it into django. It handles routing, different config options and persistence of tokens and public keys. To use dreiAttest you need to use the corresponing libraries for [iOS](https://github.com/dreipol/dreiAttest-ios) and [Android / Kotlin Multiplatform](https://github.com/dreipol/dreiAttest-android).
 
 ## Installation
 
