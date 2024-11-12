@@ -21,13 +21,13 @@ from dreiattest.exceptions import (
     UnsupportedEncryptionException,
 )
 from dreiattest.models import Nonce, Key, DeviceSession
-from settings import DREIATTEST_APPID_HEADER
 from .generate_config import (
     apple_config,
     google_safety_net_config,
     google_play_integrity_api_config,
 )
 
+_dreiattest_app_id_header = dreiattest_settings.DREIATTEST_APPID_HEADER
 
 def resolve_plugins(request: WSGIRequest, attestation: Attestation):
     plugins = []
@@ -53,7 +53,7 @@ def key_from_request(
     except JSONDecodeError:
         raise InvalidPayloadException
 
-    app_id = request.META.get(DREIATTEST_APPID_HEADER)
+    app_id = request.META.get(_dreiattest_app_id_header, None)
     driver = data.get("driver", None)
     driver_handler = drivers.get(driver, None)
     if not driver_handler:
