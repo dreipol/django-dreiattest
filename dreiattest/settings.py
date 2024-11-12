@@ -1,6 +1,6 @@
 from django.conf import settings
 
-# Our different endpoints like /key and /nonce will be bellow this slug
+# Our different endpoints like /key and /nonce will be below this slug
 DREIATTEST_BASE_URL = getattr(settings, "DREIATTEST_BASE_URL", "dreiattest/")
 
 # Header containing the DeviceSession uid
@@ -23,13 +23,19 @@ DREIATTEST_NONCE_HEADER = getattr(
     settings, "DREIATTEST_NONCE_HEADER", "HTTP_DREIATTEST_NONCE"
 )
 
-# Header containing the shared secret to bypass the verification process. Helpfull for debugging
+# Header containing the shared secret to bypass the verification process. Helpful for debugging
 DREIATTEST_BYPASS_HEADER = getattr(
     settings, "DREIATTEST_BYPASS_HEADER", "HTTP_DREIATTEST_SHARED_SECRET"
 )
 
+# Header containing the app identifier (bundle id on iOS, package id on Android). Used for selecting the appropriate
+# verification configuration.
+DREIATTEST_APPID_HEADER = getattr(
+    settings, "DREIATTEST_APPID_HEADER", "HTTP_DREIATTEST_APP_IDENTIFIER"
+)
+
 # Header containing the apple app id
-DREIATTEST_APPLE_APPID = getattr(settings, "DREIATTEST_APPLE_APPID", None)
+DREIATTEST_APPLE_APPID = getattr(settings, "DREIATTEST_APPLE_APPID", [])
 
 # Header containing the google apk name
 DREIATTEST_GOOGLE_APK_NAME = getattr(settings, "DREIATTEST_GOOGLE_APK_NAME", None)
@@ -64,6 +70,11 @@ DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS = getattr(
 # (see https://developer.android.com/google/play/integrity/setup#optional_device_information)
 DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT = getattr(
     settings, "DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT", "MEETS_DEVICE_INTEGRITY"
+)
+
+# Configuration dicts for the play integrity api (see README for more info).
+DREIATTEST_PLAY_INTEGRITY_CONFIGS: list[dict[str, any]] = getattr(
+    settings, "DREIATTEST_PLAY_INTEGRITY_CONFIGS", []
 )
 
 # If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.

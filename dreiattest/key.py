@@ -11,10 +11,8 @@ from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from django.core.handlers.wsgi import WSGIRequest
 from django.utils.module_loading import import_string
 from pyattest.attestation import Attestation
-from pyattest.configs.apple import AppleConfig
 from pyattest.configs.config import Config
-from pyattest.configs.google import GoogleConfig
-from pyattest.configs.google_play_integrity_api import GooglePlayIntegrityApiConfig
+from pyattest.exceptions import PyAttestException, InvalidAppIdException
 
 from dreiattest import settings as dreiattest_settings
 from dreiattest.exceptions import (
@@ -23,6 +21,7 @@ from dreiattest.exceptions import (
     UnsupportedEncryptionException,
 )
 from dreiattest.models import Nonce, Key, DeviceSession
+from settings import DREIATTEST_APPID_HEADER
 from .generate_config import (
     apple_config,
     google_safety_net_config,
@@ -47,17 +46,20 @@ def key_from_request(
     Get the public key from given request, validate the attestation and either create or update the given key
     for that session.
     """
+    nonce.mark_used()
+
     try:
         data = json.loads(request.body.decode())
     except JSONDecodeError:
         raise InvalidPayloadException
 
+    app_id = request.META.get(DREIATTEST_APPID_HEADER)
     driver = data.get("driver", None)
     driver_handler = drivers.get(driver, None)
     if not driver_handler:
         raise InvalidDriverException
 
-    attestation, public_key = driver_handler(data, device_session, nonce)
+    attestation, public_key = driver_handler(app_id, data, device_session, nonce)
     data = {
         "public_key": public_key,
         "public_key_id": get_key_id(public_key),
@@ -67,7 +69,6 @@ def key_from_request(
     resolve_plugins(request, attestation)
 
     key, _ = Key.objects.update_or_create(device_session=device_session, defaults=data)
-    nonce.mark_used()
 
     return key
 
@@ -95,7 +96,7 @@ def get_key_id(pem_public_key: str) -> str:
 
 
 def google(
-    data: dict, device_session: DeviceSession, nonce: Nonce, config: Config
+    data: dict, device_session: DeviceSession, nonce: Nonce, configs: list[Config]
 ) -> Tuple[Attestation, str]:
     attestation = data.get("attestation", None)
     public_key = data.get("public_key", None)  # base64 encoded
@@ -105,8 +106,9 @@ def google(
     nonce = str(device_session) + public_key + nonce.value
     nonce = sha256(nonce.encode()).digest()
 
-    attestation = Attestation(attestation, nonce, config)
-    attestation.verify()
+    attestation = _verify_with_configs(
+        attestation=attestation, nonce=nonce, configs=configs
+    )
 
     # For the google driver the public_key_id is actually the base64 encoded public key
     public_key = serialization.load_der_public_key(base64.b64decode(public_key))
@@ -118,42 +120,63 @@ def google(
 
 
 def google_safety_net(
-    data: dict, device_session: DeviceSession, nonce: Nonce
+    app_id: str, data: dict, device_session: DeviceSession, nonce: Nonce
 ) -> Tuple[Attestation, str]:
-    config = google_safety_net_config()
-    return google(data, device_session, nonce, config)
+    configs = google_safety_net_config()
+    return google(data, device_session, nonce, configs)
 
 
 def google_play_integrity_api(
-    data: dict, device_session: DeviceSession, nonce: Nonce
+    app_id: str, data: dict, device_session: DeviceSession, nonce: Nonce
 ) -> Tuple[Attestation, str]:
-    if dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST:
-        signatures = [dreiattest_settings.DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST]
-    else:
-        signatures = None
-    config = google_play_integrity_api_config()
-    return google(data, device_session, nonce, config)
+    configs = google_play_integrity_api_config(app_id=app_id)
+    return google(data, device_session, nonce, configs)
 
 
 def apple(
-    data: dict, device_session: DeviceSession, nonce: Nonce
+    app_id: str, data: dict, device_session: DeviceSession, nonce: Nonce
 ) -> Tuple[Attestation, str]:
     attestation = base64.b64decode(data.get("attestation", None))
     public_key_id = data.get("key_id", None)  # base64 encoded
     if not attestation or not public_key_id:
         raise InvalidPayloadException
 
-    config = apple_config(public_key_id)
+    configs = apple_config(app_id=app_id, public_key_id=public_key_id)
 
     nonce = (str(device_session) + public_key_id + nonce.value).encode()
-
-    attestation = Attestation(attestation, nonce, config)
-    attestation.verify()
+    attestation = _verify_with_configs(
+        attestation=attestation, nonce=nonce, configs=configs
+    )
 
     certificate = attestation.data.get("certs")[-1]
     public_key = pem.armor("PUBLIC KEY", certificate.public_key.dump()).decode()
 
     return attestation, public_key
+
+
+def _verify_with_configs(
+    attestation, nonce: bytes, configs: list[Config]
+) -> Attestation:
+    if not configs:
+        # If configs is empty that means the user did not configure anything for that app id
+        raise InvalidAppIdException
+
+    error_to_raise = None
+
+    for config in configs:
+        try:
+            attestation = Attestation(attestation, nonce, config)
+            attestation.verify()
+            return attestation
+
+        except PyAttestException as error:
+            # If we are unable to verify the attestation we raise the error we got for the first configuration. We
+            # expect the user to configure dreiAttest in such a way that the first configuration is appropriate in most
+            # cases.
+            if error_to_raise is None:
+                error_to_raise = error
+
+    raise error_to_raise
 
 
 drivers = {
