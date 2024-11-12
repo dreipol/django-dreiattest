@@ -6,11 +6,11 @@ verify_ssl = true
 [dev-packages]
 twine = "*"
 setuptools = "*"
+black = "*"
 
 [packages]
 django = "==5.*"
 pyattest = "==1.*"
-black = "*"
 
 [scripts]
 tests = "pytest"
