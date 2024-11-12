@@ -21,7 +21,7 @@ urlpatterns = [
 
 There are multiple settings you can and or have to set in your settings.py. The following are mandatory:
 
-- **Apple**: `DREIATTEST_APPLE_APPID` 
+- **Apple**: `DREIATTEST_APPLE_APPIDS` - A list of Apple App IDs that are allowed to connect to your server. You can find the App ID in the Apple Developer Portal under Certificates, Identifiers & Profiles > Identifiers > App IDs. The App ID is the `Identifier` field.
 - **Google (Legacy: Safety Net)**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST`
 - **Google Play Integrity API**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_DECRYPTION_KEY`, `DREIATTEST_GOOGLE_VERIFICATION_KEY` which can be generated as described [here](https://developer.android.com/google/play/integrity/setup#switch-google-managed)
 

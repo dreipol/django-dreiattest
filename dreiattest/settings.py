@@ -35,40 +35,43 @@ DREIATTEST_APPID_HEADER = getattr(
 )
 
 # Header containing the apple app id
-DREIATTEST_APPLE_APPID = getattr(settings, "DREIATTEST_APPLE_APPID", [])
+_dreiattest_apple_app_id_deprecated = getattr(settings, "DREIATTEST_APPLE_APPID", None)
+
+# Header containing the apple app ids
+DREIATTEST_APPLE_APPIDS = getattr(settings, "DREIATTEST_APPLE_APPIDS", _dreiattest_apple_app_id_deprecated or [])
 
 # Header containing the google apk name
-DREIATTEST_GOOGLE_APK_NAME = getattr(settings, "DREIATTEST_GOOGLE_APK_NAME", None)
+__DREIATTEST_GOOGLE_APK_NAME = getattr(settings, "DREIATTEST_GOOGLE_APK_NAME", None)
 
 # Indicating if we're in a production environment or not. Some extra verifications are made if this is true.
 DREIATTEST_PRODUCTION = getattr(settings, "DREIATTEST_PRODUCTION", True)
 
 # SHA256 hex of the Google APK Certificate
-DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST = getattr(
+__DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST = getattr(
     settings, "DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST", None
 )
 
 # The decryption key of the play integrity api
 # see: https://developer.android.com/google/play/integrity/setup#switching-api-key-management
-DREIATTEST_GOOGLE_DECRYPTION_KEY = getattr(
+__DREIATTEST_GOOGLE_DECRYPTION_KEY = getattr(
     settings, "DREIATTEST_GOOGLE_DECRYPTION_KEY", None
 )
 
 # The verification key of the play integrity api
 # see: https://developer.android.com/google/play/integrity/setup#switching-api-key-management
-DREIATTEST_GOOGLE_VERIFICATION_KEY = getattr(
+__DREIATTEST_GOOGLE_VERIFICATION_KEY = getattr(
     settings, "DREIATTEST_GOOGLE_VERIFICATION_KEY", None
 )
 
 # Allow apps that were not installed via the Play Store to connect to your server. These will be verified via the
 # signing certificate instead. (DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST must be set)
-DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS = getattr(
+__DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS = getattr(
     settings, "DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS", False
 )
 
 # The minimum device integrty verdict that must be present.
 # (see https://developer.android.com/google/play/integrity/setup#optional_device_information)
-DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT = getattr(
+__DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT = getattr(
     settings, "DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT", "MEETS_DEVICE_INTEGRITY"
 )
 
@@ -76,6 +79,16 @@ DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT = getattr(
 DREIATTEST_PLAY_INTEGRITY_CONFIGS: list[dict[str, any]] = getattr(
     settings, "DREIATTEST_PLAY_INTEGRITY_CONFIGS", []
 )
+if len(DREIATTEST_PLAY_INTEGRITY_CONFIGS) == 0:
+    DREIATTEST_PLAY_INTEGRITY_CONFIGS = [
+        {
+            "apk_name": __DREIATTEST_GOOGLE_APK_NAME,
+            "decryption_key": __DREIATTEST_GOOGLE_DECRYPTION_KEY,
+            "verification_key": __DREIATTEST_GOOGLE_VERIFICATION_KEY,
+            "allow_non_play_installs": __DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS,
+            "certificate_digest": __DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST,
+            "required_device_verdict": __DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT,
+        }]
 
 # If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.
 DREIATTEST_BYPASS_SECRET = getattr(settings, "DREIATTEST_BYPASS_SECRET", None)

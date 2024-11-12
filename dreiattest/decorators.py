@@ -24,21 +24,24 @@ from .generate_config import (
 def verify_assertion(
     app_id: str, key: Key, nonce: bytes, assertion: str, expected_hash: bytes
 ):
-    # for verifying the assertion (request signature) the app_id doesn't matter. We, therefore, just use the first
+    # For verifying the assertion (request signature) the app_id doesn't matter. We, therefore, just use the first
     # config.
     if key.driver == "apple":
-        config = apple_config(app_id=app_id, public_key_id=key.public_key_id)[0]
+        config = apple_config(app_id=app_id, public_key_id=key.public_key_id)
     elif key.driver == "google":
-        config = google_safety_net_config()[0]
+        config = google_safety_net_config()
     elif key.driver == "google_play_integrity_api":
-        config = google_play_integrity_api_config(app_id=app_id)[0]
+        config = google_play_integrity_api_config(app_id=app_id)
     else:
+        raise InvalidDriverException
+
+    if len(config) == 0:
         raise InvalidDriverException
 
     expected_hash = sha256(expected_hash + nonce).digest()
     pem_key = key.load_pem()
 
-    assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config)
+    assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config[0])
     assertion.verify()
 
 
