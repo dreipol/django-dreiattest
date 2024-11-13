@@ -38,7 +38,7 @@ DREIATTEST_APPID_HEADER = getattr(
 _dreiattest_apple_app_id_deprecated = getattr(settings, "DREIATTEST_APPLE_APPID", None)
 
 # Header containing the apple app ids
-DREIATTEST_APPLE_APPIDS = getattr(settings, "DREIATTEST_APPLE_APPIDS", _dreiattest_apple_app_id_deprecated or [])
+DREIATTEST_APPLE_APPIDS = getattr(settings, "DREIATTEST_APPLE_APPIDS", [_dreiattest_apple_app_id_deprecated] or [])
 
 # Header containing the google apk name
 __DREIATTEST_GOOGLE_APK_NAME = getattr(settings, "DREIATTEST_GOOGLE_APK_NAME", None)
