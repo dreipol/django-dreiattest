@@ -29,15 +29,20 @@ def google_play_integrity_api_config(app_id: str) -> list[GooglePlayIntegrityApi
 
 
 def _generate_play_integrity_config(
-        settings: dict[str, any]
+    settings: dict[str, any]
 ) -> GooglePlayIntegrityApiConfig:
+    if settings.get("certificate_digest"):
+        signatures = [settings.get("certificate_digest")]
+    else:
+        signatures = None
+
     return GooglePlayIntegrityApiConfig(
         decryption_key=settings.get("decryption_key"),
         verification_key=settings.get("verification_key"),
         apk_package_name=settings.get("apk_name"),
         production=dreiattest_settings.DREIATTEST_PRODUCTION,
         allow_non_play_distribution=settings.get("allow_non_play_installs", False),
-        verify_code_signature_hex=settings.get("certificate_digest"),
+        verify_code_signature_hex=signatures,
         required_device_verdict=settings.get(
             "required_device_verdict", "MEETS_DEVICE_INTEGRITY"
         ),
