@@ -38,7 +38,9 @@ DREIATTEST_APPID_HEADER = getattr(
 _dreiattest_apple_app_id_deprecated = getattr(settings, "DREIATTEST_APPLE_APPID", None)
 
 # Header containing the apple app ids
-DREIATTEST_APPLE_APPIDS = getattr(settings, "DREIATTEST_APPLE_APPIDS", [_dreiattest_apple_app_id_deprecated] or [])
+DREIATTEST_APPLE_APPIDS = getattr(
+    settings, "DREIATTEST_APPLE_APPIDS", [_dreiattest_apple_app_id_deprecated] or []
+)
 
 # Header containing the google apk name
 __DREIATTEST_GOOGLE_APK_NAME = getattr(settings, "DREIATTEST_GOOGLE_APK_NAME", None)
@@ -88,7 +90,8 @@ if len(DREIATTEST_PLAY_INTEGRITY_CONFIGS) == 0:
             "allow_non_play_installs": __DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS,
             "certificate_digest": __DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST,
             "required_device_verdict": __DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT,
-        }]
+        }
+    ]
 
 # If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.
 DREIATTEST_BYPASS_SECRET = getattr(settings, "DREIATTEST_BYPASS_SECRET", None)

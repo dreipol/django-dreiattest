@@ -29,6 +29,7 @@ from .generate_config import (
 
 _dreiattest_app_id_header = dreiattest_settings.DREIATTEST_APPID_HEADER
 
+
 def resolve_plugins(request: WSGIRequest, attestation: Attestation):
     plugins = []
     for plugin in dreiattest_settings.DREIATTEST_PLUGINS:
