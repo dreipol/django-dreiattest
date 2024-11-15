@@ -53,7 +53,10 @@ def should_bypass(request: WSGIRequest) -> bool:
     via the bypass-header and this value matches with ou configured bypass secret.
     """
     shared_secret = request.META.get(dreiattest_settings.DREIATTEST_BYPASS_HEADER, None)
-    expected_shared_secret = dreiattest_settings.DREIATTEST_BYPASS_SECRET
+    app_id = request.META.get(dreiattest_settings.DREIATTEST_APPID_HEADER)
+    configs = dreiattest_settings.DREIATTEST_BYPASS_CONFIGS
+    app_config = configs.get(app_id, {}) or configs.get(dreiattest_settings.BYPASS_APP_ID_ALL, {})
+    expected_shared_secret = app_config.get("bypass_secret", None)
 
     if not shared_secret or not expected_shared_secret:
         return False

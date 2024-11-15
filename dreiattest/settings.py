@@ -93,8 +93,16 @@ if len(DREIATTEST_PLAY_INTEGRITY_CONFIGS) == 0:
         }
     ]
 
+DREIATTEST_BYPASS_CONFIGS = getattr(settings, "DREIATTEST_BYPASS_CONFIGS", {})
+
 # If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the veirification is skipped.
-DREIATTEST_BYPASS_SECRET = getattr(settings, "DREIATTEST_BYPASS_SECRET", None)
+# DEPRECATED: Use DREIATTEST_BYPASS_CONFIGS instead with the app_id '*'
+__DREIATTEST_BYPASS_SECRET = getattr(settings, "DREIATTEST_BYPASS_SECRET", None)
+
+BYPASS_APP_ID_ALL = "*"
+
+if __DREIATTEST_BYPASS_SECRET and BYPASS_APP_ID_ALL not in DREIATTEST_BYPASS_CONFIGS:
+    DREIATTEST_BYPASS_CONFIGS[BYPASS_APP_ID_ALL] = {"bypass_secret": __DREIATTEST_BYPASS_SECRET}
 
 # Give the user a chance to hook into the key registration process
 DREIATTEST_PLUGINS = getattr(settings, "DREIATTEST_PLUGINS", [])
