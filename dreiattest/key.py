@@ -108,7 +108,7 @@ def google(
     nonce = sha256(nonce.encode()).digest()
 
     attestation = _verify_with_configs(
-        attestation=attestation, nonce=nonce, configs=configs
+        attestation_data=attestation, nonce=nonce, configs=configs
     )
 
     # For the google driver the public_key_id is actually the base64 encoded public key
@@ -146,7 +146,7 @@ def apple(
 
     nonce = (str(device_session) + public_key_id + nonce.value).encode()
     attestation = _verify_with_configs(
-        attestation=attestation, nonce=nonce, configs=configs
+        attestation_data=attestation, nonce=nonce, configs=configs
     )
 
     certificate = attestation.data.get("certs")[-1]
@@ -156,7 +156,7 @@ def apple(
 
 
 def _verify_with_configs(
-    attestation, nonce: bytes, configs: list[Config]
+    attestation_data, nonce: bytes, configs: list[Config]
 ) -> Attestation:
     if not configs:
         # If configs is empty that means the user did not configure anything for that app id
@@ -166,7 +166,7 @@ def _verify_with_configs(
 
     for config in configs:
         try:
-            attestation = Attestation(attestation, nonce, config)
+            attestation = Attestation(attestation_data, nonce, config)
             attestation.verify()
             return attestation
 
