@@ -17,34 +17,53 @@ urlpatterns = [
 ]
 ```
 
-## Config
-
-There are multiple settings you can and or have to set in your settings.py. The following are mandatory:
-
-- **Apple**: `DREIATTEST_APPLE_APPID` 
-- **Google (Legacy: Safety Net)**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST`
-- **Google Play Integrity API**: `DREIATTEST_GOOGLE_APK_NAME`, `DREIATTEST_GOOGLE_DECRYPTION_KEY`, `DREIATTEST_GOOGLE_VERIFICATION_KEY` which can be generated as described [here](https://developer.android.com/google/play/integrity/setup#switch-google-managed)
+## Configuration
 
 These are all the possible config values and what they do.
 
-- DREIATTEST_BASE_URL: Our different endpoints like /key and /nonce will be bellow this slug
-- DREIATTEST_UID_HEADER: Header containing the DeviceSession uid
-- DREIATTEST_ASSERTION_HEADER: Header containing the assertion
-- DREIATTEST_USER_HEADERS_HEADER: Header containing the list of comma separated headers that are included in the assertion
-- DREIATTEST_NONCE_HEADER: Header containing the server nonce that was used inside the attestation
-- DREIATTEST_BYPASS_HEADER: Header containing the shared secret to bypass the verification process. Helpfull for debugging
-- DREIATTEST_APPLE_APPID: Header containing the apple app id
-- DREIATTEST_GOOGLE_APK_NAME: Header containing the google apk name
-- DREIATTEST_GOOGLE_DECRYPTION_KEY: A Base64 encoded AES key secret as described [here](https://developer.android.com/google/play/integrity/verdict#decrypt-verify)
-- DREIATTEST_GOOGLE_VERIFICATION_KEY: A Base64 encoded public key as described [here](https://developer.android.com/google/play/integrity/verdict#decrypt-verify)
+- DREIATTEST_BASE_URL: Our different endpoints like /key and /nonce will be below this slug
+- DREIATTEST_BYPASS_SECRET: The shared secret to bypass the verification process. Helpful for debugging
+- DREIATTEST_APPLE_APPIDS: The list of apple app ids (consisting of the team id + bundle id)
+- DREIATTEST_PLAY_INTEGRITY_CONFIGS: A json-object containing one or more configuration objects. Apps trying to connect to your server need to match one of these configurations. If there are multiple configurations for a given package identifier, they are tested in order. It is, therefore, recommended to list the configuration you expect to work for most clients first. The following configuration options are available: 
+  - apk_name: The package identifier of your Android app 
+  - decryption_key: A Base64 encoded AES key secret as described [here](https://developer.android.com/google/play/integrity/classic#decrypt-verify). It can be obtained by switching to self-managed keys as described [here](https://developer.android.com/google/play/integrity/setup#switch-google-managed).
+  - verification_key: A Base64 encoded public key as described [here](https://developer.android.com/google/play/integrity/classic#decrypt-verify). It can be obtained by switching to self-managed keys as described [here](https://developer.android.com/google/play/integrity/setup#switch-google-managed).
+  - (optional) certificate_digest: SHA256 hex of the Google APK Certificate
+  - (optional) allow_non_play_installs: Allow apps that were not installed via the Play Store to connect to your server. These will be verified via the signing certificate instead. (`certificate_digest` must be set)
+  - (optional) required_device_verdict: The minimum device [integrty](https://developer.android.com/google/play/integrity/setup#optional_device_information) verdict that must be present.
 - DREIATTEST_PRODUCTION: Indicating if we're in a production environment or not. Some extra verifications are made if this is true. Those are described in the [pyttest](https://github.com/dreipol/pyattest) readme.
-- DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST: SHA256 hex of the Google APK Certificate
-- DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS: Allow apps that were not installed via the Play Store to connect to your server. These will be verified via the signing certificate instead. (`DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST` must be set)
-- DREIATTEST_GOOGLE_REQUIRED_DEVICE_VERDICT: The minimum device [integrty](https://developer.android.com/google/play/integrity/setup#optional_device_information) verdict that must be present.
 - DREIATTEST_PLUGINS: List of classes implementing `BasePlugin` - gives you the option to handle extra verification
 - DREIATTEST_BYPASS_SECRET: **DANGERZONE** If this is set and DREIATTEST_BYPASS_HEADER is sent by the client, the verification is skipped.
 
 You can find the default value (if any) for each of them in the [settings.py](https://github.com/dreipol/django-dreiattest/blob/master/dreiattest/settings.py)
+
+### Sample Configuration
+In your `base.py` this may look like this:
+```python
+DREIATTEST_APPLE_APPIDS = env.list('DREIATTEST_APPLE_APPIDS', default=['0000000000.ch.dreipol.ios1', '0000000000.ch.dreipol.ios2'])
+DREIATTEST_PRODUCTION = env('DREIATTEST_PRODUCTION', default=True)
+DREIATTEST_BYPASS_SECRET = env('DREIATTEST_BYPASS_SECRET', default=None)
+DREIATTEST_PLAY_INTEGRITY_CONFIGS = [
+    {
+        "apk_name": "ch.dreipol.android1",
+        "decryption_key": env('DREIATTEST_GOOGLE_DECRYPTION_KEY1', default=None),
+        "verification_key": env('DREIATTEST_GOOGLE_VERIFICATION_KEY1', default=None),
+        "required_device_verdict": "MEETS_STRONG_INTEGRITY"
+    },
+    {
+        "apk_name": "ch.dreipol.android2",
+        "decryption_key": env('DREIATTEST_GOOGLE_DECRYPTION_KEY2', default=None),
+        "verification_key": env('DREIATTEST_GOOGLE_VERIFICATION_KEY2', default=None)
+    },
+    {
+        "apk_name": "ch.dreipol.android2",
+        "decryption_key": env('DREIATTEST_GOOGLE_DECRYPTION_KEY2', default=None),
+        "verification_key": env('DREIATTEST_GOOGLE_VERIFICATION_KEY2', default=None),
+        "allow_non_play_installs": True,
+        "certificate_digest": env('DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST', default=None)
+    }
+]
+```
 
 ## Usage
 
@@ -86,7 +105,7 @@ If you are using Play Integrity and your app is distributed via the Play Store y
   - **iOS**: Allows dev and production builds to connect to your server. Since iOS requires you to register an App Id to use App Attest this provides some weakened security guarantees. The checks are performed normally but a different environment is used for Apple's attestation api. This should be sufficient to validate your configuration.
   - Additionally it is possible to connect to the server using the `DREIATTEST_BYPASS_SECRET`.
  
-- Setting `DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS = True`
+- Setting `allow_non_play_installs = True`
   - Allows Android apps to connect even if they were not distributed via the Play Store (e.g. dev builds). All the checks are run but instead of letting the Play Store verify your build and signing key the `DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST` is checked. This can be a useful intermediate step to verify your configuration before publishing on the Play Store. Note that once you publish your app on the Play Store you shuld set the value back to `DREIATTEST_GOOGLE_ALLOW_NON_PLAY_INSTALLS = False` and remove or adjust your `DREIATTEST_GOOGLE_APK_CERTIFICATE_DIGEST` (see [Common issues](#common-issues) above).
 
 Before publishing your app on the App Store / Play Store you should validate your setup using a Test Flight / Testing Channel Build. These behave the same as production builds.

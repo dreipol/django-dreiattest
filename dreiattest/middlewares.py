@@ -14,6 +14,10 @@ from dreiattest.exceptions import (
     UnsupportedEncryptionException,
     NoKeyForSessionException,
 )
+from dreiattest import settings as dreiattest_settings
+import logging
+
+
 
 relevant_base = (PyAttestException, DreiAttestException, InvalidSignature, InvalidKey)
 nonce_mismatch = (InvalidNonceException,)
@@ -27,6 +31,7 @@ invalid_key = (
     NoKeyForSessionException,
 )
 
+logger = logging.getLogger("dreiattest")
 
 class HandleDreiattestExceptionsMiddleware(object):
     def __init__(self, get_response):
@@ -43,6 +48,8 @@ class HandleDreiattestExceptionsMiddleware(object):
         code = exception.__class__.__name__
         if code.endswith("Exception"):
             code = code[:-9]
+
+        logger.exception("Dreiattest-Exception", exc_info=exception)
 
         response = JsonResponse(data={"code": code}, status=403)
         response["Dreiattest-error"] = self.get_header(exception)

@@ -4,9 +4,6 @@ from hashlib import sha256
 
 from django.core.handlers.wsgi import WSGIRequest
 from pyattest.assertion import Assertion
-from pyattest.configs.apple import AppleConfig
-from pyattest.configs.google import GoogleConfig
-from pyattest.configs.google_play_integrity_api import GooglePlayIntegrityApiConfig
 
 from dreiattest.device_session import device_session_from_request
 from dreiattest.exceptions import (
@@ -24,20 +21,27 @@ from .generate_config import (
 )
 
 
-def verify_assertion(key: Key, nonce: bytes, assertion: str, expected_hash: bytes):
+def verify_assertion(
+    app_id: str, key: Key, nonce: bytes, assertion: str, expected_hash: bytes
+):
+    # For verifying the assertion (request signature) the app_id doesn't matter. We, therefore, just use the first
+    # config.
     if key.driver == "apple":
-        config = apple_config(key.public_key_id)
+        config = apple_config(app_id=app_id, public_key_id=key.public_key_id)
     elif key.driver == "google":
         config = google_safety_net_config()
     elif key.driver == "google_play_integrity_api":
-        config = google_play_integrity_api_config()
+        config = google_play_integrity_api_config(app_id=app_id)
     else:
+        raise InvalidDriverException
+
+    if len(config) == 0:
         raise InvalidDriverException
 
     expected_hash = sha256(expected_hash + nonce).digest()
     pem_key = key.load_pem()
 
-    assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config)
+    assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config[0])
     assertion.verify()
 
 
@@ -74,6 +78,7 @@ def signature_required():
             if not public_key:
                 raise NoKeyForSessionException
 
+            app_id = request.META.get(dreiattest_settings.DREIATTEST_APPID_HEADER)
             nonce = request.META.get(
                 dreiattest_settings.DREIATTEST_NONCE_HEADER
             ).encode("utf-8")
@@ -85,7 +90,7 @@ def signature_required():
             )
             expected_hash = request_hash(request, headers.split(","))
 
-            verify_assertion(public_key, nonce, assertion, expected_hash)
+            verify_assertion(app_id, public_key, nonce, assertion, expected_hash)
 
             return func(request, *args, **kwargs)
 
