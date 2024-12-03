@@ -12,6 +12,11 @@ prepare-commit-msg:
 
 pre-commit:
   commands:
-    lint:
-        glob: "*.{py}"
-        run: pipenv run black {staged_files} --check --exclude migrations
+    backend-linter:
+      root: "backend/"
+      run: pipenv run ruff check --fix {staged_files}
+      stage_fixed: true
+    backend-formatter:
+      root: "backend/"
+      run: pipenv run ruff format {staged_files}
+      stΩΩΩge_fixed: trueΩ

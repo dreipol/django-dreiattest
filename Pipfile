@@ -6,7 +6,7 @@ verify_ssl = true
 [dev-packages]
 twine = "*"
 setuptools = "*"
-black = "*"
+ruff = "==0.7.*"
 
 [packages]
 django = "==5.*"

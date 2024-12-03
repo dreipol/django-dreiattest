@@ -41,9 +41,7 @@ def verify_assertion(
     expected_hash = sha256(expected_hash + nonce).digest()
     pem_key = key.load_pem()
 
-    assertion = Assertion(
-        base64.b64decode(assertion), expected_hash, pem_key, config[0]
-    )
+    assertion = Assertion(base64.b64decode(assertion), expected_hash, pem_key, config[0])
     assertion.verify()
 
 
