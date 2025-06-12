@@ -34,6 +34,18 @@ DREIATTEST_APPID_HEADER = getattr(
     settings, "DREIATTEST_APPID_HEADER", "HTTP_DREIATTEST_APP_IDENTIFIER"
 )
 
+# Header containing the version of the dreiAttest library used
+DREIATTEST_LIBRARY_VERSION_HEADER = getattr(settings, "DREIATTEST_LIBRARY_VERSION", "HTTP_DREIATTEST_LIBRARY_VERSION")
+
+# Header containing the (user readable) version string of the app
+DREIATTEST_APP_VERSION_HEADER = getattr(settings, "DREIATTEST_APP_VERSION", "HTTP_DREIATTEST_APP_VERSION")
+
+# Header containing the build number of the app
+DREIATTEST_APP_BUILD_HEADER = getattr(settings, "DREIATTEST_APP_BUILD", "HTTP_DREIATTEST_APP_BUILD")
+
+# Header containing the operating system and version of the client
+DREIATTEST_OS_HEADER = getattr(settings, "DREIATTEST_OS", "HTTP_DREIATTEST_OS")
+
 # Header containing the apple app id
 _dreiattest_apple_app_id_deprecated = getattr(settings, "DREIATTEST_APPLE_APPID", None)
 
