@@ -30,9 +30,26 @@ DREIATTEST_BYPASS_HEADER = getattr(
 
 # Header containing the app identifier (bundle id on iOS, package id on Android). Used for selecting the appropriate
 # verification configuration.
+# e.g. ch.dreipol.example.app
 DREIATTEST_APPID_HEADER = getattr(
     settings, "DREIATTEST_APPID_HEADER", "HTTP_DREIATTEST_APP_IDENTIFIER"
 )
+
+# Header containing the (user readable) version of the dreiAttest library used
+# e.g. kotlin-1.1
+DREIATTEST_LIBRARY_VERSION_HEADER = getattr(settings, "DREIATTEST_LIBRARY_VERSION", "HTTP_DREIATTEST_LIBRARY_VERSION")
+
+# Header containing the (user readable) version string of the app
+# e.g. 1.3.2
+DREIATTEST_APP_VERSION_HEADER = getattr(settings, "DREIATTEST_APP_VERSION", "HTTP_DREIATTEST_APP_VERSION")
+
+# Header containing the build number of the app
+# e.g. 33
+DREIATTEST_APP_BUILD_HEADER = getattr(settings, "DREIATTEST_APP_BUILD", "HTTP_DREIATTEST_APP_BUILD")
+
+# Header containing the operating system and version of the client
+# e.g. iOS 16.7.2
+DREIATTEST_OS_HEADER = getattr(settings, "DREIATTEST_OS", "HTTP_DREIATTEST_OS")
 
 # Header containing the apple app id
 _dreiattest_apple_app_id_deprecated = getattr(settings, "DREIATTEST_APPLE_APPID", None)
