@@ -288,14 +288,6 @@
         }
     },
     "develop": {
-        "backports.tarfile": {
-            "hashes": [
-                "sha256:77e284d754527b01fb1e6fa8a1afe577858ebe4e9dad8919e34c862cb399bc34",
-                "sha256:d75e02c268746e1b8144c278978b6e98e85de6ad16f8e4b0844a154557eca991"
-            ],
-            "markers": "python_version >= '3.8'",
-            "version": "==1.2.0"
-        },
         "certifi": {
             "hashes": [
                 "sha256:922820b53db7a7257ffbda3f597266d435245903d80737e34f8a45ff3e3230d8",
@@ -431,14 +423,6 @@
             "markers": "python_version >= '3.6'",
             "version": "==3.10"
         },
-        "importlib-metadata": {
-            "hashes": [
-                "sha256:45e54197d28b7a7f1559e60b95e7c567032b602131fbd588f1497f47880aa68b",
-                "sha256:71522656f0abace1d072b9e5481a48f07c138e00f079c38c8f883823f9c26bd7"
-            ],
-            "markers": "python_version >= '3.8'",
-            "version": "==8.5.0"
-        },
         "jaraco.classes": {
             "hashes": [
                 "sha256:47a024b51d0239c0dd8c8540c6c7f484be3b8fcf0b2d85c13825780d3b3f3acd",
@@ -532,14 +516,6 @@
             "markers": "python_version >= '3.8'",
             "version": "==24.2"
         },
-        "pkginfo": {
-            "hashes": [
-                "sha256:8ad91a0445a036782b9366ef8b8c2c50291f83a553478ba8580c73d3215700cf",
-                "sha256:dcd589c9be4da8973eceffa247733c144812759aa67eaf4bbf97016a02f39088"
-            ],
-            "markers": "python_version >= '3.8'",
-            "version": "==1.12.0"
-        },
         "pygments": {
             "hashes": [
                 "sha256:786ff802f32e91311bff3889f6e9a86e81505fe99f2735bb6d60ae0c5004f199",
@@ -615,12 +591,12 @@
         },
         "setuptools": {
             "hashes": [
-                "sha256:8199222558df7c86216af4f84c30e9b34a61d8ba19366cc914424cdbd28252f6",
-                "sha256:ce74b49e8f7110f9bf04883b730f4765b774ef3ef28f722cce7c273d253aaf7d"
+                "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922",
+                "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c"
             ],
             "index": "pypi",
             "markers": "python_version >= '3.9'",
-            "version": "==75.6.0"
+            "version": "==80.9.0"
         },
         "twine": {
             "hashes": [
@@ -638,14 +614,6 @@
             ],
             "markers": "python_version >= '3.8'",
             "version": "==2.2.3"
-        },
-        "zipp": {
-            "hashes": [
-                "sha256:2c9958f6430a2040341a52eb608ed6dd93ef4392e02ffe219417c1b28b5dd1f4",
-                "sha256:ac1bbe05fd2991f160ebce24ffbac5f6d11d83dc90891255885223d42b3cd931"
-            ],
-            "markers": "python_version >= '3.9'",
-            "version": "==3.21.0"
         }
     }
 }
