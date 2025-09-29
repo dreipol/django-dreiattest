@@ -4,6 +4,7 @@ from hashlib import sha256
 from json import JSONDecodeError
 from typing import Tuple
 
+from asgiref.sync import sync_to_async
 from asn1crypto import pem
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
@@ -47,7 +48,7 @@ async def key_from_request(
     Get the public key from given request, validate the attestation and either create or update the given key
     for that session.
     """
-    nonce.mark_used()
+    await sync_to_async(nonce.mark_used)()
 
     try:
         data = json.loads(request.body.decode())
@@ -69,7 +70,7 @@ async def key_from_request(
 
     resolve_plugins(request, attestation)
 
-    key, _ = Key.objects.update_or_create(device_session=device_session, defaults=data)
+    key, _ = await sync_to_async(Key.objects.update_or_create)(device_session=device_session, defaults=data)
 
     return key
 
@@ -149,7 +150,7 @@ async def apple(
         attestation_data=attestation, nonce=nonce, configs=configs
     )
 
-    certificate = attestation.data.get("certs")[-1]
+    certificate = attestation.data.get("certs").last
     public_key = pem.armor("PUBLIC KEY", certificate.public_key.dump()).decode()
 
     return attestation, public_key

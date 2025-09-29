@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from django.core.handlers.wsgi import WSGIRequest
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -22,10 +23,10 @@ def nonce(request: WSGIRequest):
 
 @require_http_methods(["POST"])
 @csrf_exempt
-async def key(request: WSGIRequest):
+def key(request: WSGIRequest):
     """Store a public key belonging to a user in the database. Upcoming requests can be signed with said key."""
     device_session = device_session_from_request(request, create=False)
     nonce = nonce_from_request(request, device_session)
-    public_key = await key_from_request(request, nonce, device_session)
+    public_key = async_to_sync(key_from_request)(request, nonce, device_session)
 
     return JsonResponse({"success": True, "key_id": public_key.public_key_id})
