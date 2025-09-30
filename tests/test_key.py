@@ -4,6 +4,7 @@ from hashlib import sha256
 from unittest.mock import patch
 import pkgutil
 
+import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.x509.base import load_pem_x509_certificate
 from pyattest.configs.apple import AppleConfig
@@ -29,8 +30,9 @@ class PublicKey(TestCase):
         self.root_ca_pem = self.root_ca.public_bytes(serialization.Encoding.PEM)
         self.rf = RequestFactory()
 
+    @pytest.mark.asyncio
     @patch("dreiattest.key.AppleConfig")
-    def test_can_create_key_with_apple_driver(self, mock_config):
+    async def test_can_create_key_with_apple_driver(self, mock_config):
         """Mock the apple config so we can inject our custom root_ca which is also used in the apple_factory."""
         device_session = DeviceSession(session_id=uuid.uuid4(), user_id="test")
         device_session.save()
@@ -51,14 +53,15 @@ class PublicKey(TestCase):
         }
         request = self.rf.post("/foo", data, content_type="application/json")
 
-        key = key_from_request(request, nonce, device_session)
+        key = await key_from_request(request, nonce, device_session)
         nonce.refresh_from_db()
         self.assertEqual(key.public_key_id, base64.b64encode(key_id).decode())
         self.assertEqual(key.driver, "apple")
         self.assertTrue(bool(nonce.used_at))
 
+    @pytest.mark.asyncio
     @patch("dreiattest.key.GoogleConfig")
-    def test_can_create_key_with_google_driver(self, mock_config):
+    async def test_can_create_key_with_google_driver(self, mock_config):
         """Mock the google config so we can inject our custom root_ca which is also used in the apple_factory."""
         device_session = DeviceSession(session_id=uuid.uuid4(), user_id="test")
         device_session.save()
@@ -91,14 +94,15 @@ class PublicKey(TestCase):
             serialization.Encoding.PEM, serialization.PublicFormat.SubjectPublicKeyInfo
         )
         key_id = get_key_id(public_key.decode())
-        key = key_from_request(request, nonce, device_session)
+        key = await key_from_request(request, nonce, device_session)
         nonce.refresh_from_db()
 
         self.assertEqual(key.driver, "google")
         self.assertEqual(key.public_key_id, key_id)
         self.assertTrue(bool(nonce.used_at))
 
-    def test_invalid_driver(self):
+    @pytest.mark.asyncio
+    async def test_invalid_driver(self):
         device_session = DeviceSession(session_id=uuid.uuid4(), user_id="test")
         device_session.save()
         nonce = create_nonce(device_session)
@@ -106,4 +110,4 @@ class PublicKey(TestCase):
         request = self.rf.post("/foo", data, content_type="application/json")
 
         with self.assertRaises(InvalidDriverException):
-            key = key_from_request(request, nonce, device_session)
+            await key_from_request(request, nonce, device_session)

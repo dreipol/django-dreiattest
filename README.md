@@ -1,3 +1,5 @@
+from middlewares import register_exception_handlersfrom ninja import NinjaAPI
+
 # django-dreiattest
 
 dreiattest leverages [pyattest](https://github.com/dreipol/pyattest) and integrates it into django. It handles routing, different config options and persistence of tokens and public keys. To use dreiAttest you need to use the corresponing libraries for [iOS](https://github.com/dreipol/dreiAttest-ios) and [Android / Kotlin Multiplatform](https://github.com/dreipol/dreiAttest-android).
@@ -86,6 +88,12 @@ MIDDLEWARE = [
     ...
     'dreiattest.middlewares.HandleDreiattestExceptionsMiddleware',
 ]
+```
+
+Additionally, you should set up the exception handlers for your ninja app:
+```py
+api = NinjaAPI(...)
+register_exception_handlers(api)
 ```
 
 ## Typical Flow

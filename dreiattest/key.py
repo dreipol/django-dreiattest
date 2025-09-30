@@ -4,6 +4,7 @@ from hashlib import sha256
 from json import JSONDecodeError
 from typing import Tuple
 
+from asgiref.sync import sync_to_async
 from asn1crypto import pem
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ec import EllipticCurvePublicKey
@@ -40,14 +41,14 @@ def resolve_plugins(request: WSGIRequest, attestation: Attestation):
         plugin().run(request, attestation)
 
 
-def key_from_request(
+async def key_from_request(
     request: WSGIRequest, nonce: Nonce, device_session: DeviceSession
 ) -> Key:
     """
     Get the public key from given request, validate the attestation and either create or update the given key
     for that session.
     """
-    nonce.mark_used()
+    await sync_to_async(nonce.mark_used)()
 
     try:
         data = json.loads(request.body.decode())
@@ -60,7 +61,7 @@ def key_from_request(
     if not driver_handler:
         raise InvalidDriverException
 
-    attestation, public_key = driver_handler(app_id, data, device_session, nonce)
+    attestation, public_key = await driver_handler(app_id, data, device_session, nonce)
     data = {
         "public_key": public_key,
         "public_key_id": get_key_id(public_key),
@@ -69,7 +70,7 @@ def key_from_request(
 
     resolve_plugins(request, attestation)
 
-    key, _ = Key.objects.update_or_create(device_session=device_session, defaults=data)
+    key, _ = await sync_to_async(Key.objects.update_or_create)(device_session=device_session, defaults=data)
 
     return key
 
@@ -96,7 +97,7 @@ def get_key_id(pem_public_key: str) -> str:
     return base64.b64encode(sha256(public_key_formatted).digest()).decode()
 
 
-def google(
+async def google(
     data: dict, device_session: DeviceSession, nonce: Nonce, configs: list[Config]
 ) -> Tuple[Attestation, str]:
     attestation = data.get("attestation", None)
@@ -107,7 +108,7 @@ def google(
     nonce = str(device_session) + public_key + nonce.value
     nonce = sha256(nonce.encode()).digest()
 
-    attestation = _verify_with_configs(
+    attestation = await _verify_with_configs(
         attestation_data=attestation, nonce=nonce, configs=configs
     )
 
@@ -120,21 +121,21 @@ def google(
     return attestation, public_key.decode()
 
 
-def google_safety_net(
+async def google_safety_net(
     app_id: str, data: dict, device_session: DeviceSession, nonce: Nonce
 ) -> Tuple[Attestation, str]:
     configs = google_safety_net_config()
-    return google(data, device_session, nonce, configs)
+    return await google(data, device_session, nonce, configs)
 
 
-def google_play_integrity_api(
+async def google_play_integrity_api(
     app_id: str, data: dict, device_session: DeviceSession, nonce: Nonce
 ) -> Tuple[Attestation, str]:
     configs = google_play_integrity_api_config(app_id=app_id)
-    return google(data, device_session, nonce, configs)
+    return await google(data, device_session, nonce, configs)
 
 
-def apple(
+async def apple(
     app_id: str, data: dict, device_session: DeviceSession, nonce: Nonce
 ) -> Tuple[Attestation, str]:
     attestation = base64.b64decode(data.get("attestation", None))
@@ -145,17 +146,17 @@ def apple(
     configs = apple_config(app_id=app_id, public_key_id=public_key_id)
 
     nonce = (str(device_session) + public_key_id + nonce.value).encode()
-    attestation = _verify_with_configs(
+    attestation = await _verify_with_configs(
         attestation_data=attestation, nonce=nonce, configs=configs
     )
 
-    certificate = attestation.data.get("certs")[-1]
+    certificate = attestation.data.get("certs").last
     public_key = pem.armor("PUBLIC KEY", certificate.public_key.dump()).decode()
 
     return attestation, public_key
 
 
-def _verify_with_configs(
+async def _verify_with_configs(
     attestation_data, nonce: bytes, configs: list[Config]
 ) -> Attestation:
     if not configs:
@@ -167,7 +168,7 @@ def _verify_with_configs(
     for config in configs:
         try:
             attestation = Attestation(attestation_data, nonce, config)
-            attestation.verify()
+            await attestation.verify()
             return attestation
 
         except PyAttestException as error:
